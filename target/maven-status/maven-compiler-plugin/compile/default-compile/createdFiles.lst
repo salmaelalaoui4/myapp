@@ -1,2 +1,6 @@
 com\mycompany\app\App.class
+com\mycompany\app\AdminLoginFrame$1.class
+com\mycompany\app\AdminLoginFrame.class
+com\mycompany\app\BooksDisplayFrame.class
+com\mycompany\app\BookManagementFrame.class
 com\mycompany\app\DatabaseConnection.class
