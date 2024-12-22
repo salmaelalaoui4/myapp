@@ -10,38 +10,65 @@ import java.sql.Statement;
 
 public class BooksDisplayFrame extends JFrame {
 
+    private JPanel booksPanel;
+
     public BooksDisplayFrame() {
+        // Configuration de la fenêtre principale
         setTitle("Livres Disponibles");
-        setSize(1000, 700); // Taille ajustée
+        setSize(1000, 700);
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         // Panel principal
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBackground(new Color(45, 52, 54));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         add(mainPanel);
 
-        // Titre en haut
-        JLabel lblTitle = new JLabel("Livres Disponibles", SwingConstants.CENTER);
+        // Titre
+        JLabel lblTitle = new JLabel("Gestion des Livres", SwingConstants.CENTER);
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        lblTitle.setForeground(new Color(50, 50, 150)); // Couleur personnalisée
+        lblTitle.setForeground(new Color(241, 242, 246));
+        lblTitle.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
         mainPanel.add(lblTitle, BorderLayout.NORTH);
 
-        // Panneau contenant les livres
-        JPanel booksPanel = new JPanel();
-        booksPanel.setLayout(new GridLayout(0, 3, 15, 15)); // 3 colonnes avec des espacements
-        booksPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        // Panneau des livres
+        booksPanel = new JPanel();
+        booksPanel.setLayout(new GridLayout(0, 3, 15, 15)); // 3 colonnes
+        booksPanel.setBackground(new Color(45, 52, 54));
 
-        // Charger les livres disponibles
+        // Ajouter un JScrollPane pour permettre le défilement
+        JScrollPane scrollPane = new JScrollPane(booksPanel);
+        scrollPane.setBackground(new Color(45, 52, 54));
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+
+        // Bouton pour ajouter un livre
+        JButton btnAddBook = new JButton("Ajouter un Livre");
+        btnAddBook.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnAddBook.setForeground(Color.WHITE);
+        btnAddBook.setBackground(new Color(0, 184, 148));
+        btnAddBook.setFocusPainted(false);
+        btnAddBook.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        btnAddBook.addActionListener(e -> ouvrirFormulaireAjoutLivre());
+        mainPanel.add(btnAddBook, BorderLayout.SOUTH);
+
+        // Charger les livres
+        chargerLivres();
+    }
+
+    private void chargerLivres() {
+        booksPanel.removeAll(); // Vider les livres actuels
         try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
             String query = "SELECT * FROM livre WHERE statut = 1";
             Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery(query);
 
             while (resultSet.next()) {
-                // Panneau individuel pour chaque livre
                 JPanel bookPanel = new JPanel();
                 bookPanel.setLayout(new BorderLayout(10, 10));
+                bookPanel.setBackground(new Color(64, 74, 76));
                 bookPanel.setBorder(BorderFactory.createLineBorder(new Color(100, 100, 100), 1));
 
                 // Ajouter la photo
@@ -52,7 +79,6 @@ public class BooksDisplayFrame extends JFrame {
                     Image scaledImage = bookImage.getImage().getScaledInstance(150, 200, Image.SCALE_SMOOTH);
                     photoLabel = new JLabel(new ImageIcon(scaledImage));
                 } else {
-                    // Icône par défaut si l'image est absente
                     photoLabel = new JLabel("Aucune image", SwingConstants.CENTER);
                     photoLabel.setPreferredSize(new Dimension(150, 200));
                     photoLabel.setOpaque(true);
@@ -66,9 +92,9 @@ public class BooksDisplayFrame extends JFrame {
                         "ISBN : " + resultSet.getString("isbn") + "</html>";
                 JLabel infoLabel = new JLabel(bookInfo, SwingConstants.CENTER);
                 infoLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+                infoLabel.setForeground(new Color(241, 242, 246));
                 bookPanel.add(infoLabel, BorderLayout.SOUTH);
 
-                // Ajouter le panneau du livre au panneau principal
                 booksPanel.add(bookPanel);
             }
         } catch (Exception e) {
@@ -76,13 +102,14 @@ public class BooksDisplayFrame extends JFrame {
             JOptionPane.showMessageDialog(this, "Erreur lors du chargement des livres : " + e.getMessage());
         }
 
-        // Ajouter un JScrollPane pour permettre le défilement
-        JScrollPane scrollPane = new JScrollPane(booksPanel);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        booksPanel.revalidate();
+        booksPanel.repaint();
     }
 
-    // Méthode main pour exécuter cette classe
+    private void ouvrirFormulaireAjoutLivre() {
+        new BookManagementFrame().setVisible(true); // Formulaire d'ajout de livre
+    }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             BooksDisplayFrame frame = new BooksDisplayFrame();

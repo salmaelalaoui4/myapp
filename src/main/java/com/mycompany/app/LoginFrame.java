@@ -6,15 +6,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.*;
 
-public class AdminLoginFrame extends JFrame {
+public class LoginFrame extends JFrame {
     private JTextField emailField;
     private JPasswordField passwordField;
-    private JButton loginButton;
     private JLabel statusLabel;
 
-    public AdminLoginFrame() {
+    public LoginFrame() {
         // Configuration de la fenêtre principale
-        setTitle("Connexion Administrateur");
+        setTitle("Connexion Utilisateur");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(500, 350);
         setLocationRelativeTo(null);
@@ -26,7 +25,7 @@ public class AdminLoginFrame extends JFrame {
         mainPanel.setBackground(new Color(45, 52, 54));
 
         // Titre
-        JLabel titleLabel = new JLabel("Connexion Administrateur", SwingConstants.CENTER);
+        JLabel titleLabel = new JLabel("Connexion", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
         titleLabel.setForeground(new Color(241, 242, 246));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
@@ -76,7 +75,7 @@ public class AdminLoginFrame extends JFrame {
         mainPanel.add(formPanel, BorderLayout.CENTER);
 
         // Bouton de connexion
-        loginButton = new JButton("Se connecter");
+        JButton loginButton = new JButton("Se connecter");
         loginButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
         loginButton.setForeground(Color.WHITE);
         loginButton.setBackground(new Color(0, 184, 148));
@@ -115,23 +114,30 @@ public class AdminLoginFrame extends JFrame {
             String pass = "";
             connection = DriverManager.getConnection(url, user, pass);
 
-            String query = "SELECT * FROM utilisateur WHERE email = ? AND motDePasse = ? AND role = 'admin'";
+            String query = "SELECT * FROM utilisateur WHERE email = ? AND motDePasse = ?";
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setString(1, email);
             statement.setString(2, password);
             ResultSet resultSet = statement.executeQuery();
 
             if (resultSet.next()) {
-                statusLabel.setForeground(new Color(0, 184, 148));
-                statusLabel.setText("Connexion réussie !");
-                JOptionPane.showMessageDialog(this, "Bienvenue, Administrateur !");
+                String role = resultSet.getString("role");
+                if ("admin".equalsIgnoreCase(role)) {
+                    JOptionPane.showMessageDialog(this, "Bienvenue, Administrateur !");
+                    dispose(); // Ferme la fenêtre de connexion
+                    new AdminDashboardFrame().setVisible(true); // Ouvre l'interface admin
+                } else if ("bibliothecaire".equalsIgnoreCase(role)) {
+                    JOptionPane.showMessageDialog(this, "Bienvenue, Bibliothécaire !");
+                    dispose(); // Ferme la fenêtre de connexion
+                    new LibrarianDashboardFrame().setVisible(true); // Ouvre l'interface bibliothécaire
+                } else {
+                    statusLabel.setText("Rôle inconnu.");
+                }
             } else {
-                statusLabel.setForeground(Color.RED);
                 statusLabel.setText("Email ou mot de passe incorrect.");
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-            statusLabel.setForeground(Color.RED);
             statusLabel.setText("Erreur de connexion à la base de données.");
         } finally {
             try {
@@ -145,9 +151,10 @@ public class AdminLoginFrame extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            AdminLoginFrame frame = new AdminLoginFrame();
-            frame.setVisible(true);
-        });
-    }
+    SwingUtilities.invokeLater(() -> {
+        LoginFrame loginFrame = new LoginFrame();
+        loginFrame.setVisible(true);
+    });
+}
+
 }

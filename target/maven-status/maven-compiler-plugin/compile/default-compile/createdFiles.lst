@@ -1,6 +1,12 @@
-com\mycompany\app\App.class
-com\mycompany\app\AdminLoginFrame$1.class
-com\mycompany\app\AdminLoginFrame.class
 com\mycompany\app\BooksDisplayFrame.class
+com\mycompany\app\LoginFrame.class
 com\mycompany\app\BookManagementFrame.class
 com\mycompany\app\DatabaseConnection.class
+com\mycompany\app\AdminLibrarianManagementFrame.class
+com\mycompany\app\LibrarianDashboardFrame.class
+com\mycompany\app\LoanManagementFrame.class
+com\mycompany\app\App.class
+com\mycompany\app\LoginFrame$1.class
+com\mycompany\app\PurchaseManagementFrame.class
+com\mycompany\app\AdminDashboardFrame.class
+com\mycompany\app\ClientManagementFrame.class
