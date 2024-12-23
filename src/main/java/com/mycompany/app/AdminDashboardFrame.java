@@ -36,13 +36,13 @@ public class AdminDashboardFrame extends JFrame {
         btnManageLibrarians.setFocusPainted(false);
         btnManageLibrarians.addActionListener(e -> new AdminLibrarianManagementFrame().setVisible(true));
 
-        // Bouton pour valider les achats
-        JButton btnValidatePurchases = new JButton("Valider les Achats");
-        btnValidatePurchases.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        btnValidatePurchases.setBackground(new Color(0, 184, 148));
-        btnValidatePurchases.setForeground(Color.WHITE);
-        btnValidatePurchases.setFocusPainted(false);
-        btnValidatePurchases.addActionListener(e -> JOptionPane.showMessageDialog(this, "Validation des achats à implémenter !"));
+        // Bouton pour consulter les achats
+        JButton btnConsultPurchases = new JButton("Consulter les Achats");
+        btnConsultPurchases.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        btnConsultPurchases.setBackground(new Color(0, 184, 148));
+        btnConsultPurchases.setForeground(Color.WHITE);
+        btnConsultPurchases.setFocusPainted(false);
+        btnConsultPurchases.addActionListener(e -> new GestionAchatsAdminFrame().setVisible(true));
 
         // Bouton pour gérer les livres
         JButton btnManageBooks = new JButton("Gérer les Livres");
@@ -50,11 +50,11 @@ public class AdminDashboardFrame extends JFrame {
         btnManageBooks.setBackground(new Color(0, 184, 148));
         btnManageBooks.setForeground(Color.WHITE);
         btnManageBooks.setFocusPainted(false);
-        btnManageBooks.addActionListener(e -> new BookManagementFrame().setVisible(true));
+        btnManageBooks.addActionListener(e -> new BooksDisplayFrame().setVisible(true));
 
         // Ajouter les boutons au panneau
         buttonPanel.add(btnManageLibrarians);
-        buttonPanel.add(btnValidatePurchases);
+        buttonPanel.add(btnConsultPurchases); // Change this button to consult purchases
         buttonPanel.add(btnManageBooks);
 
         mainPanel.add(buttonPanel, BorderLayout.CENTER);

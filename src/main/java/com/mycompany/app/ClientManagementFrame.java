@@ -33,7 +33,7 @@ public class ClientManagementFrame extends JFrame {
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
         // Boutons
-        JPanel buttonPanel = new JPanel(new GridLayout(1, 3, 10, 10));
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 10, 10));
         JButton btnAdd = new JButton("Ajouter");
         JButton btnUpdate = new JButton("Mettre à jour");
 
@@ -44,58 +44,66 @@ public class ClientManagementFrame extends JFrame {
         buttonPanel.add(btnUpdate);
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
+        // Charger les clients au démarrage
         chargerClients();
     }
 
     private void chargerClients() {
-        tableModel.setRowCount(0); // Vider le tableau
-        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-            String query = "SELECT * FROM client";
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(query);
+    tableModel.setRowCount(0); // Efface les données existantes dans le tableau
 
-            while (resultSet.next()) {
-                tableModel.addRow(new Object[]{
-                        resultSet.getInt("idClient"),
-                        resultSet.getString("nom"),
-                        resultSet.getString("prenom"),
-                        resultSet.getString("email"),
-                        resultSet.getString("telephone")
-                });
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Erreur lors du chargement des clients : " + e.getMessage());
+    try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
+        String query = "SELECT idClient, nom, prenom, email, telephone FROM client WHERE statut = 1";
+        Statement statement = connection.createStatement();
+        ResultSet resultSet = statement.executeQuery(query);
+
+        while (resultSet.next()) {
+            int idClient = resultSet.getInt("idClient");
+            String nom = resultSet.getString("nom");
+            String prenom = resultSet.getString("prenom");
+            String email = resultSet.getString("email");
+            String telephone = resultSet.getString("telephone");
+
+            tableModel.addRow(new Object[]{idClient, nom, prenom, email, telephone});
         }
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Erreur lors du chargement des clients : " + e.getMessage());
     }
+}
+
 
     private void ajouterClient() {
-        String nom = JOptionPane.showInputDialog(this, "Nom du client :");
-        String prenom = JOptionPane.showInputDialog(this, "Prénom du client :");
-        String email = JOptionPane.showInputDialog(this, "Email du client :");
-        String telephone = JOptionPane.showInputDialog(this, "Téléphone du client :");
+    String nom = JOptionPane.showInputDialog(this, "Nom du client :");
+    String prenom = JOptionPane.showInputDialog(this, "Prénom du client :");
+    String email = JOptionPane.showInputDialog(this, "Email du client :");
+    String adresse = JOptionPane.showInputDialog(this, "Adresse du client :");
+    String telephone = JOptionPane.showInputDialog(this, "Téléphone du client :");
 
-        if (nom == null || prenom == null || email == null || telephone == null ||
-                nom.isEmpty() || prenom.isEmpty() || email.isEmpty() || telephone.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Tous les champs sont obligatoires !");
-            return;
-        }
-
-        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-            String query = "INSERT INTO client (nom, prenom, email, telephone) VALUES (?, ?, ?, ?)";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setString(1, nom);
-            statement.setString(2, prenom);
-            statement.setString(3, email);
-            statement.setString(4, telephone);
-            statement.executeUpdate();
-            JOptionPane.showMessageDialog(this, "Client ajouté avec succès !");
-            chargerClients();
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Erreur lors de l'ajout du client : " + e.getMessage());
-        }
+    if (nom == null || prenom == null || email == null || adresse == null || telephone == null ||
+            nom.isEmpty() || prenom.isEmpty() || email.isEmpty() || adresse.isEmpty() || telephone.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Tous les champs sont obligatoires !");
+        return;
     }
+
+    try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
+        String query = "INSERT INTO client (nom, prenom, email, adresse, telephone, statut, dateInscription) " +
+                       "VALUES (?, ?, ?, ?, ?, 1, NOW())";
+        PreparedStatement statement = connection.prepareStatement(query);
+        statement.setString(1, nom);
+        statement.setString(2, prenom);
+        statement.setString(3, email);
+        statement.setString(4, adresse);
+        statement.setString(5, telephone);
+        statement.executeUpdate();
+
+        JOptionPane.showMessageDialog(this, "Client ajouté avec succès !");
+        chargerClients(); // Recharger la liste des clients après l'ajout
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Erreur lors de l'ajout du client : " + e.getMessage());
+    }
+}
+
 
     private void mettreAJourClient() {
         int selectedRow = clientTable.getSelectedRow();
@@ -104,7 +112,10 @@ public class ClientManagementFrame extends JFrame {
             return;
         }
 
+        // Récupérer l'ID du client sélectionné
         int idClient = (int) tableModel.getValueAt(selectedRow, 0);
+
+        // Demander les nouvelles valeurs
         String nouveauNom = JOptionPane.showInputDialog(this, "Nouveau nom :", tableModel.getValueAt(selectedRow, 1));
         String nouveauPrenom = JOptionPane.showInputDialog(this, "Nouveau prénom :", tableModel.getValueAt(selectedRow, 2));
         String nouveauTelephone = JOptionPane.showInputDialog(this, "Nouveau téléphone :", tableModel.getValueAt(selectedRow, 4));
@@ -116,16 +127,17 @@ public class ClientManagementFrame extends JFrame {
         }
 
         try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-            String query = "UPDATE client SET nom = ?, prenom = ?, telephone = ? WHERE idClient = ?";
+            String query = "UPDATE utilisateur SET nom = ?, prenom = ?, telephone = ? WHERE idUtilisateur = ?";
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setString(1, nouveauNom);
             statement.setString(2, nouveauPrenom);
             statement.setString(3, nouveauTelephone);
             statement.setInt(4, idClient);
             statement.executeUpdate();
+
             JOptionPane.showMessageDialog(this, "Client mis à jour avec succès !");
-            chargerClients();
-        } catch (Exception e) {
+            chargerClients(); // Rafraîchir la table après la mise à jour
+        } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Erreur lors de la mise à jour du client : " + e.getMessage());
         }

@@ -28,6 +28,7 @@ public class LibrarianDashboardFrame extends JFrame {
         JPanel buttonPanel = new JPanel(new GridLayout(3, 1, 20, 20));
         buttonPanel.setBackground(new Color(45, 52, 54));
 
+        // Bouton pour gérer les clients
         JButton btnManageClients = new JButton("Gérer les Clients");
         btnManageClients.setFont(new Font("Segoe UI", Font.BOLD, 16));
         btnManageClients.setBackground(new Color(0, 184, 148));
@@ -35,6 +36,18 @@ public class LibrarianDashboardFrame extends JFrame {
         btnManageClients.setFocusPainted(false);
         btnManageClients.addActionListener(e -> new ClientManagementFrame().setVisible(true)); // Ouvre la gestion des clients
 
+        // Bouton pour gérer les achats
+        JButton btnManageAchat = new JButton("Gérer les Achats");
+        btnManageAchat.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        btnManageAchat.setBackground(new Color(0, 184, 148));
+        btnManageAchat.setForeground(Color.WHITE);
+        btnManageAchat.setFocusPainted(false);
+        btnManageAchat.addActionListener(e -> {
+            // Ouvre la fenêtre de gestion des achats
+            new AchatCreationFrame().setVisible(true);
+        });
+
+        // Bouton pour gérer les emprunts et retours
         JButton btnManageLoans = new JButton("Gérer les Emprunts et Retours");
         btnManageLoans.setFont(new Font("Segoe UI", Font.BOLD, 16));
         btnManageLoans.setBackground(new Color(0, 184, 148));
@@ -42,16 +55,9 @@ public class LibrarianDashboardFrame extends JFrame {
         btnManageLoans.setFocusPainted(false);
         btnManageLoans.addActionListener(e -> JOptionPane.showMessageDialog(this, "Gestion des emprunts à implémenter !")); // Placeholder
 
-        JButton btnManageExchanges = new JButton("Gérer les Échanges");
-        btnManageExchanges.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        btnManageExchanges.setBackground(new Color(0, 184, 148));
-        btnManageExchanges.setForeground(Color.WHITE);
-        btnManageExchanges.setFocusPainted(false);
-        btnManageExchanges.addActionListener(e -> JOptionPane.showMessageDialog(this, "Gestion des échanges à implémenter !")); // Placeholder
-
         buttonPanel.add(btnManageClients);
+        buttonPanel.add(btnManageAchat);  // Ajoutez ce bouton pour gérer les achats
         buttonPanel.add(btnManageLoans);
-        buttonPanel.add(btnManageExchanges);
 
         mainPanel.add(buttonPanel, BorderLayout.CENTER);
     }

@@ -59,52 +59,54 @@ public class BooksDisplayFrame extends JFrame {
     }
 
     private void chargerLivres() {
-        booksPanel.removeAll(); // Vider les livres actuels
-        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-            String query = "SELECT * FROM livre WHERE statut = 1";
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(query);
+    booksPanel.removeAll(); // Vider les livres actuels
+    try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
+        // Modifier la requête pour charger tous les livres, sans filtrer par statut
+        String query = "SELECT * FROM livre"; // Ne pas filtrer par statut
+        Statement statement = connection.createStatement();
+        ResultSet resultSet = statement.executeQuery(query);
 
-            while (resultSet.next()) {
-                JPanel bookPanel = new JPanel();
-                bookPanel.setLayout(new BorderLayout(10, 10));
-                bookPanel.setBackground(new Color(64, 74, 76));
-                bookPanel.setBorder(BorderFactory.createLineBorder(new Color(100, 100, 100), 1));
+        while (resultSet.next()) {
+            JPanel bookPanel = new JPanel();
+            bookPanel.setLayout(new BorderLayout(10, 10));
+            bookPanel.setBackground(new Color(64, 74, 76));
+            bookPanel.setBorder(BorderFactory.createLineBorder(new Color(100, 100, 100), 1));
 
-                // Ajouter la photo
-                String photoPath = resultSet.getString("photo");
-                JLabel photoLabel;
-                if (photoPath != null && !photoPath.isEmpty() && new File(photoPath).exists()) {
-                    ImageIcon bookImage = new ImageIcon(photoPath);
-                    Image scaledImage = bookImage.getImage().getScaledInstance(150, 200, Image.SCALE_SMOOTH);
-                    photoLabel = new JLabel(new ImageIcon(scaledImage));
-                } else {
-                    photoLabel = new JLabel("Aucune image", SwingConstants.CENTER);
-                    photoLabel.setPreferredSize(new Dimension(150, 200));
-                    photoLabel.setOpaque(true);
-                    photoLabel.setBackground(new Color(220, 220, 220));
-                }
-                bookPanel.add(photoLabel, BorderLayout.CENTER);
-
-                // Ajouter les informations du livre
-                String bookInfo = "<html><b>" + resultSet.getString("titre") + "</b><br>" +
-                        "Auteur : " + resultSet.getString("auteur") + "<br>" +
-                        "ISBN : " + resultSet.getString("isbn") + "</html>";
-                JLabel infoLabel = new JLabel(bookInfo, SwingConstants.CENTER);
-                infoLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-                infoLabel.setForeground(new Color(241, 242, 246));
-                bookPanel.add(infoLabel, BorderLayout.SOUTH);
-
-                booksPanel.add(bookPanel);
+            // Ajouter la photo
+            String photoPath = resultSet.getString("photo");
+            JLabel photoLabel;
+            if (photoPath != null && !photoPath.isEmpty() && new File(photoPath).exists()) {
+                ImageIcon bookImage = new ImageIcon(photoPath);
+                Image scaledImage = bookImage.getImage().getScaledInstance(150, 200, Image.SCALE_SMOOTH);
+                photoLabel = new JLabel(new ImageIcon(scaledImage));
+            } else {
+                photoLabel = new JLabel("Aucune image", SwingConstants.CENTER);
+                photoLabel.setPreferredSize(new Dimension(150, 200));
+                photoLabel.setOpaque(true);
+                photoLabel.setBackground(new Color(220, 220, 220));
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Erreur lors du chargement des livres : " + e.getMessage());
-        }
+            bookPanel.add(photoLabel, BorderLayout.CENTER);
 
-        booksPanel.revalidate();
-        booksPanel.repaint();
+            // Ajouter les informations du livre
+            String bookInfo = "<html><b>" + resultSet.getString("titre") + "</b><br>" +
+                    "Auteur : " + resultSet.getString("auteur") + "<br>" +
+                    "ISBN : " + resultSet.getString("isbn") + "</html>";
+            JLabel infoLabel = new JLabel(bookInfo, SwingConstants.CENTER);
+            infoLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            infoLabel.setForeground(new Color(241, 242, 246));
+            bookPanel.add(infoLabel, BorderLayout.SOUTH);
+
+            booksPanel.add(bookPanel);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Erreur lors du chargement des livres : " + e.getMessage());
     }
+
+    booksPanel.revalidate();
+    booksPanel.repaint();
+}
+
 
     private void ouvrirFormulaireAjoutLivre() {
         new BookManagementFrame().setVisible(true); // Formulaire d'ajout de livre
