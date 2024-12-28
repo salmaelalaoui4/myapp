@@ -3,10 +3,7 @@ package com.mycompany.app;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.*;
 
 public class BooksDisplayFrame extends JFrame {
 
@@ -96,6 +93,19 @@ public class BooksDisplayFrame extends JFrame {
             infoLabel.setForeground(new Color(241, 242, 246));
             bookPanel.add(infoLabel, BorderLayout.SOUTH);
 
+            // Extraire l'ID du livre
+            int idLivre = resultSet.getInt("idLivre");
+
+            // Ajouter un bouton "Consulter"
+            JButton btnConsulter = new JButton("Consulter");
+            btnConsulter.setBackground(new Color(0, 184, 148));
+            btnConsulter.setForeground(Color.WHITE);
+
+            // Action du bouton Consulter
+            btnConsulter.addActionListener(e -> afficherDetailsLivre(idLivre));
+
+            bookPanel.add(btnConsulter, BorderLayout.NORTH);
+
             booksPanel.add(bookPanel);
         }
     } catch (Exception e) {
@@ -107,6 +117,32 @@ public class BooksDisplayFrame extends JFrame {
     booksPanel.repaint();
 }
 
+
+    private void afficherDetailsLivre(int idLivre) {
+        // Affichage des détails d'un livre dans une nouvelle fenêtre
+        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
+            String query = "SELECT * FROM livre WHERE idLivre = ?";  // Requête pour récupérer un livre par son ID
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setInt(1, idLivre);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                String titre = resultSet.getString("titre");
+                String auteur = resultSet.getString("auteur");
+                String isbn = resultSet.getString("isbn");
+                String annee = resultSet.getString("anneePublication");
+                String description = resultSet.getString("description");
+                String photoPath = resultSet.getString("photo");
+
+                // Affichage dans une nouvelle fenêtre
+                BookDetailsFrame bookDetailsFrame = new BookDetailsFrame(titre, auteur, annee, isbn, description, photoPath);
+                bookDetailsFrame.setVisible(true);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Erreur lors de l'affichage des détails du livre : " + e.getMessage());
+        }
+    }
 
     private void ouvrirFormulaireAjoutLivre() {
         new BookManagementFrame().setVisible(true); // Formulaire d'ajout de livre
