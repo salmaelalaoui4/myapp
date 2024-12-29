@@ -25,7 +25,7 @@ public class AdminDashboardFrameBiblio extends JFrame {
         mainPanel.add(lblTitle, BorderLayout.NORTH);
 
         // Boutons pour les fonctionnalités
-        JPanel buttonPanel = new JPanel(new GridLayout(3, 1, 20, 20));
+        JPanel buttonPanel = new JPanel(new GridLayout(5, 1, 20, 20)); // Mise à jour pour 5 boutons
         buttonPanel.setBackground(new Color(45, 52, 54));
 
         // Bouton pour gérer les bibliothécaires
@@ -52,10 +52,28 @@ public class AdminDashboardFrameBiblio extends JFrame {
         btnManageBooks.setFocusPainted(false);
         btnManageBooks.addActionListener(e -> new BooksDisplayFrame(bibliothequeId).setVisible(true));
 
+        // Bouton pour consulter les emprunts
+        JButton btnConsultLoans = new JButton("Consulter les Emprunts");
+        btnConsultLoans.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        btnConsultLoans.setBackground(new Color(0, 184, 148));
+        btnConsultLoans.setForeground(Color.WHITE);
+        btnConsultLoans.setFocusPainted(false);
+        btnConsultLoans.addActionListener(e -> new AdminLoanManagementFrame(bibliothequeId).setVisible(true));
+
+        // Bouton pour consulter les échanges
+        JButton btnConsultExchanges = new JButton("Consulter les Échanges");
+        btnConsultExchanges.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        btnConsultExchanges.setBackground(new Color(0, 184, 148));
+        btnConsultExchanges.setForeground(Color.WHITE);
+        btnConsultExchanges.setFocusPainted(false);
+        btnConsultExchanges.addActionListener(e -> new AdminExchangeManagementFrame(bibliothequeId).setVisible(true));
+
         // Ajouter les boutons au panneau
         buttonPanel.add(btnManageLibrarians);
         buttonPanel.add(btnConsultPurchases);
         buttonPanel.add(btnManageBooks);
+        buttonPanel.add(btnConsultLoans);
+        buttonPanel.add(btnConsultExchanges);
 
         mainPanel.add(buttonPanel, BorderLayout.CENTER);
     }
