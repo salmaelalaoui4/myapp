@@ -7,13 +7,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.*;
 
-public class AdminExchangeManagementFrame extends JFrame {
+public class ExchangeManagementFrame extends JFrame {
 
     private JTable exchangeTable;
     private DefaultTableModel tableModel;
     private int bibliothequeId;
 
-    public AdminExchangeManagementFrame(int bibliothequeId) {
+    public ExchangeManagementFrame(int bibliothequeId) {
         this.bibliothequeId = bibliothequeId;
         setTitle("Gestion des Échanges - Bibliothèque " + bibliothequeId);
         setSize(900, 600);
