@@ -12,6 +12,7 @@ public class AdminLibrarianManagementFrame extends JFrame {
     private DefaultTableModel tableModel;
 
     public AdminLibrarianManagementFrame(int bibliothequeId) {
+         this.bibliothequeId = bibliothequeId;
         setTitle("Gestion des Bibliothécaires");
         setSize(900, 600);
         setLocationRelativeTo(null);
@@ -39,7 +40,13 @@ public class AdminLibrarianManagementFrame extends JFrame {
         JButton btnDisable = new JButton("Désactiver");
         JButton btnDelete = new JButton("Supprimer");
 
-        btnAdd.addActionListener(e -> ajouterBibliothecaire());
+    btnAdd.addActionListener(e -> {
+    // Ouvrir le formulaire pour ajouter un bibliothécaire et passer la référence à la fenêtre admin
+    AddLibrarianFormulaire formulaire = new AddLibrarianFormulaire(bibliothequeId, this);  // Passer "this" (la fenêtre actuelle) à AddLibrarianFormulaire
+    formulaire.setVisible(true);
+});
+
+
         btnDisable.addActionListener(e -> desactiverBibliothecaire());
         btnDelete.addActionListener(e -> supprimerBibliothecaire());
 
@@ -51,12 +58,14 @@ public class AdminLibrarianManagementFrame extends JFrame {
         chargerBibliothecaires();
     }
 
-    private void chargerBibliothecaires() {
-    tableModel.setRowCount(0);
+    void chargerBibliothecaires() {
+    tableModel.setRowCount(0);  // Effacer les anciennes lignes
     try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-        String query = "SELECT * FROM utilisateur WHERE role = 'bibliothecaire'";
-        Statement statement = connection.createStatement();
-        ResultSet resultSet = statement.executeQuery(query);
+        // Utilisation de l'ID de la bibliothèque de l'administrateur pour filtrer les bibliothécaires
+        String query = "SELECT * FROM utilisateur WHERE role = 'bibliothecaire' AND idBibliotheque = ?";
+        PreparedStatement statement = connection.prepareStatement(query);
+        statement.setInt(1, bibliothequeId);  // Paramétrage de l'ID de la bibliothèque
+        ResultSet resultSet = statement.executeQuery();
 
         while (resultSet.next()) {
             tableModel.addRow(new Object[]{
@@ -74,38 +83,6 @@ public class AdminLibrarianManagementFrame extends JFrame {
     }
 }
 
-
-    private void ajouterBibliothecaire() {
-    // Collecte des informations
-    String nom = JOptionPane.showInputDialog(this, "Nom du bibliothécaire :");
-    String prenom = JOptionPane.showInputDialog(this, "Prénom du bibliothécaire :"); // Ajouter le prénom
-    String email = JOptionPane.showInputDialog(this, "Email du bibliothécaire :");
-    String telephone = JOptionPane.showInputDialog(this, "Téléphone du bibliothécaire :");
-    String password = JOptionPane.showInputDialog(this, "Mot de passe :");
-
-    if (nom == null || prenom == null || email == null || telephone == null || password == null ||
-        nom.isEmpty() || prenom.isEmpty() || email.isEmpty() || telephone.isEmpty() || password.isEmpty()) {
-        JOptionPane.showMessageDialog(this, "Tous les champs sont obligatoires !");
-        return;
-    }
-
-    // Enregistrement dans la base de données
-    try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-        String query = "INSERT INTO utilisateur (nom, prenom, email, telephone, motDePasse, role, statut) VALUES (?, ?, ?, ?, ?, 'bibliothecaire', 1)";
-        PreparedStatement statement = connection.prepareStatement(query);
-        statement.setString(1, nom);
-        statement.setString(2, prenom); // Enregistrement du prénom
-        statement.setString(3, email);
-        statement.setString(4, telephone);
-        statement.setString(5, password);
-        statement.executeUpdate();
-        JOptionPane.showMessageDialog(this, "Bibliothécaire ajouté avec succès !");
-        chargerBibliothecaires();
-    } catch (Exception e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Erreur lors de l'ajout du bibliothécaire : " + e.getMessage());
-    }
-}
 
 
     private void desactiverBibliothecaire() {
