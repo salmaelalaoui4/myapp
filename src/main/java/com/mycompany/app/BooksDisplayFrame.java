@@ -19,7 +19,9 @@ public class BooksDisplayFrame extends JFrame {
         setTitle("Livres Disponibles");
         setSize(1000, 700);
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        //setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
 
         // Panel principal
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
