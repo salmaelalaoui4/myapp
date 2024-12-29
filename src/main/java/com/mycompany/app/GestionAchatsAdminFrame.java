@@ -7,10 +7,12 @@ import java.sql.*;
 
 public class GestionAchatsAdminFrame extends JFrame {
 
+    private static int bibliothequeId;
+
     private JTable achatTable;
     private DefaultTableModel tableModel;
 
-    public GestionAchatsAdminFrame() {
+    public GestionAchatsAdminFrame(int bibliothequeId) {
         setTitle("Gestion des Achats (Admin)");
         setSize(900, 600);
         setLocationRelativeTo(null);
@@ -95,6 +97,6 @@ public class GestionAchatsAdminFrame extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new GestionAchatsAdminFrame().setVisible(true));
+        SwingUtilities.invokeLater(() -> new GestionAchatsAdminFrame(bibliothequeId).setVisible(true));
     }
 }

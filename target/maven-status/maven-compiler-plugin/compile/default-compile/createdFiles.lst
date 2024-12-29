@@ -1,3 +1,4 @@
+com\mycompany\app\AdminDashboardFrameBiblio.class
 com\mycompany\app\BookDetailsFrame.class
 com\mycompany\app\BooksDisplayFrame.class
 com\mycompany\app\GestionAchatsAdminFrame.class
@@ -7,10 +8,10 @@ com\mycompany\app\BookManagementFrame.class
 com\mycompany\app\AddBookFrame.class
 com\mycompany\app\LoanManagementFrame.class
 com\mycompany\app\App.class
-com\mycompany\app\AdminDashboardFrame.class
 com\mycompany\app\ClientManagementFrame.class
 com\mycompany\app\DatabaseConnection.class
 com\mycompany\app\AdminLibrarianManagementFrame.class
 com\mycompany\app\LibrarianDashboardFrame.class
 com\mycompany\app\AchatCreationFrame.class
+com\mycompany\app\BooksDisplayForLibrarianFrame.class
 com\mycompany\app\LoginFrame$1.class

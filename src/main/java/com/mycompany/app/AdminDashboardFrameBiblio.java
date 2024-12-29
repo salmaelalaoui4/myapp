@@ -3,10 +3,10 @@ package com.mycompany.app;
 import javax.swing.*;
 import java.awt.*;
 
-public class AdminDashboardFrame extends JFrame {
+public class AdminDashboardFrameBiblio extends JFrame {
 
-    public AdminDashboardFrame() {
-        setTitle("Tableau de Bord - Administrateur");
+    public AdminDashboardFrameBiblio(int bibliothequeId) {
+        setTitle("Tableau de Bord - Administrateur Bibliothèque " + bibliothequeId);
         setSize(900, 600);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -18,7 +18,7 @@ public class AdminDashboardFrame extends JFrame {
         add(mainPanel);
 
         // Titre
-        JLabel lblTitle = new JLabel("Tableau de Bord - Administrateur", SwingConstants.CENTER);
+        JLabel lblTitle = new JLabel("Tableau de Bord - Administrateur Bibliothèque " + bibliothequeId, SwingConstants.CENTER);
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
         lblTitle.setForeground(new Color(241, 242, 246));
         lblTitle.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
@@ -34,7 +34,7 @@ public class AdminDashboardFrame extends JFrame {
         btnManageLibrarians.setBackground(new Color(0, 184, 148));
         btnManageLibrarians.setForeground(Color.WHITE);
         btnManageLibrarians.setFocusPainted(false);
-        btnManageLibrarians.addActionListener(e -> new AdminLibrarianManagementFrame().setVisible(true));
+        btnManageLibrarians.addActionListener(e -> new AdminLibrarianManagementFrame(bibliothequeId).setVisible(true));
 
         // Bouton pour consulter les achats
         JButton btnConsultPurchases = new JButton("Consulter les Achats");
@@ -42,7 +42,7 @@ public class AdminDashboardFrame extends JFrame {
         btnConsultPurchases.setBackground(new Color(0, 184, 148));
         btnConsultPurchases.setForeground(Color.WHITE);
         btnConsultPurchases.setFocusPainted(false);
-        btnConsultPurchases.addActionListener(e -> new GestionAchatsAdminFrame().setVisible(true));
+        btnConsultPurchases.addActionListener(e -> new GestionAchatsAdminFrame(bibliothequeId).setVisible(true));
 
         // Bouton pour gérer les livres
         JButton btnManageBooks = new JButton("Gérer les Livres");
@@ -50,11 +50,11 @@ public class AdminDashboardFrame extends JFrame {
         btnManageBooks.setBackground(new Color(0, 184, 148));
         btnManageBooks.setForeground(Color.WHITE);
         btnManageBooks.setFocusPainted(false);
-        btnManageBooks.addActionListener(e -> new BooksDisplayFrame().setVisible(true));
+        btnManageBooks.addActionListener(e -> new BooksDisplayFrame(bibliothequeId).setVisible(true));
 
         // Ajouter les boutons au panneau
         buttonPanel.add(btnManageLibrarians);
-        buttonPanel.add(btnConsultPurchases); // Change this button to consult purchases
+        buttonPanel.add(btnConsultPurchases);
         buttonPanel.add(btnManageBooks);
 
         mainPanel.add(buttonPanel, BorderLayout.CENTER);
@@ -62,7 +62,7 @@ public class AdminDashboardFrame extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            AdminDashboardFrame frame = new AdminDashboardFrame();
+            AdminDashboardFrameBiblio frame = new AdminDashboardFrameBiblio(1); // Changez 1 par 2 selon la bibliothèque
             frame.setVisible(true);
         });
     }

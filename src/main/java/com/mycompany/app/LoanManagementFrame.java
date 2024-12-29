@@ -71,24 +71,73 @@ public class LoanManagementFrame extends JFrame {
     }
 
     private void enregistrerEmprunt() {
-        String idLivre = JOptionPane.showInputDialog(this, "ID du Livre :");
-        String idClient = JOptionPane.showInputDialog(this, "ID du Client :");
-        String dateRetourPrevue = JOptionPane.showInputDialog(this, "Date Retour Prévue (YYYY-MM-DD) :");
+    String idLivre = JOptionPane.showInputDialog(this, "ID du Livre :");
+    String idClient = JOptionPane.showInputDialog(this, "ID du Client :");
+    String dateRetourPrevue = JOptionPane.showInputDialog(this, "Date Retour Prévue (YYYY-MM-DD) :");
 
+    // Validation des entrées
+    if (idLivre == null || idClient == null || dateRetourPrevue == null || idLivre.trim().isEmpty() || idClient.trim().isEmpty() || dateRetourPrevue.trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Tous les champs doivent être remplis.");
+        return;
+    }
+
+    try {
+        int livreID = Integer.parseInt(idLivre);
+        int clientID = Integer.parseInt(idClient);
+
+        // Vérification que le livre et le client existent
+        if (!livreExiste(livreID) || !clientExiste(clientID)) {
+            JOptionPane.showMessageDialog(this, "Le livre ou le client n'existe pas.");
+            return;
+        }
+
+        // Enregistrer l'emprunt
         try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
             String query = "INSERT INTO emprunt (idLivre, idClient, dateEmprunt, dateRetourPrevue, statut) VALUES (?, ?, NOW(), ?, 0)";
             PreparedStatement statement = connection.prepareStatement(query);
-            statement.setInt(1, Integer.parseInt(idLivre));
-            statement.setInt(2, Integer.parseInt(idClient));
+            statement.setInt(1, livreID);
+            statement.setInt(2, clientID);
             statement.setString(3, dateRetourPrevue);
             statement.executeUpdate();
             JOptionPane.showMessageDialog(this, "Emprunt enregistré avec succès !");
             chargerEmprunts();
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Erreur lors de l'enregistrement de l'emprunt : " + e.getMessage());
         }
+    } catch (NumberFormatException e) {
+        JOptionPane.showMessageDialog(this, "L'ID du livre et de l'emprunteur doivent être des entiers.");
+    } catch (Exception e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Erreur lors de l'enregistrement de l'emprunt : " + e.getMessage());
     }
+}
+
+private boolean livreExiste(int livreID) {
+    try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
+        String query = "SELECT COUNT(*) FROM livre WHERE idLivre = ?";
+        PreparedStatement statement = connection.prepareStatement(query);
+        statement.setInt(1, livreID);
+        ResultSet resultSet = statement.executeQuery();
+        resultSet.next();
+        return resultSet.getInt(1) > 0;
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return false;
+}
+
+private boolean clientExiste(int clientID) {
+    try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
+        String query = "SELECT COUNT(*) FROM client WHERE idClient = ?";
+        PreparedStatement statement = connection.prepareStatement(query);
+        statement.setInt(1, clientID);
+        ResultSet resultSet = statement.executeQuery();
+        resultSet.next();
+        return resultSet.getInt(1) > 0;
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return false;
+}
+
 
     private void validerRetour() {
         int selectedRow = loanTable.getSelectedRow();

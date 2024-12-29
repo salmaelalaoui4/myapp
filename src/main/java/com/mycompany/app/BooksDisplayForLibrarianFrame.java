@@ -5,16 +5,11 @@ import java.awt.*;
 import java.io.File;
 import java.sql.*;
 
-public class BooksDisplayFrame extends JFrame {
+public class BooksDisplayForLibrarianFrame extends JFrame {
 
     private JPanel booksPanel;
 
-    private int currentUserLibraryId; // Assume you set this when the user logs in
-
-    public BooksDisplayFrame(int userLibraryId) {
-        // Set the current user's library ID
-        this.currentUserLibraryId = userLibraryId;
-
+    public BooksDisplayForLibrarianFrame(int bibliothequeId) {
         // Configuration de la fenêtre principale
         setTitle("Livres Disponibles");
         setSize(1000, 700);
@@ -28,7 +23,7 @@ public class BooksDisplayFrame extends JFrame {
         add(mainPanel);
 
         // Titre
-        JLabel lblTitle = new JLabel("Gestion des Livres", SwingConstants.CENTER);
+        JLabel lblTitle = new JLabel("Livres Disponibles - Bibliothécaire", SwingConstants.CENTER);
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
         lblTitle.setForeground(new Color(241, 242, 246));
         lblTitle.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
@@ -46,17 +41,18 @@ public class BooksDisplayFrame extends JFrame {
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
+        // Ne pas ajouter de bouton pour ajouter un livre
         // Charger les livres
-        chargerLivres();
+        chargerLivres(bibliothequeId);
     }
 
-    private void chargerLivres() {
+    private void chargerLivres(int bibliothequeId) {
         booksPanel.removeAll(); // Vider les livres actuels
         try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-            // Modifier la requête pour charger les livres selon l'idBibliotheque de l'utilisateur
-            String query = "SELECT * FROM livre WHERE idBibliotheque = ?"; 
+            // Modifier la requête pour charger les livres de la bibliothèque spécifiée
+            String query = "SELECT * FROM livre WHERE idBibliotheque = ?"; // Filtrer par bibliothèque
             PreparedStatement statement = connection.prepareStatement(query);
-            statement.setInt(1, currentUserLibraryId); // Passer l'ID de la bibliothèque
+            statement.setInt(1, bibliothequeId);
             ResultSet resultSet = statement.executeQuery();
 
             while (resultSet.next()) {
@@ -139,14 +135,11 @@ public class BooksDisplayFrame extends JFrame {
         }
     }
 
-    private void ouvrirFormulaireAjoutLivre() {
-        new BookManagementFrame().setVisible(true); // Formulaire d'ajout de livre
-    }
-
     public static void main(String[] args) {
-        // Example: Create the frame for admin of biblio 1 (ID 1) or biblio 2 (ID 2)
         SwingUtilities.invokeLater(() -> {
-            BooksDisplayFrame frame = new BooksDisplayFrame(1); // Replace 1 with the actual user's library ID
+            // Vous pouvez personnaliser l'ID de la bibliothèque ici (par exemple 1 ou 2)
+            int bibliothequeId = 1; 
+            BooksDisplayForLibrarianFrame frame = new BooksDisplayForLibrarianFrame(bibliothequeId);
             frame.setVisible(true);
         });
     }

@@ -122,14 +122,16 @@ public class LoginFrame extends JFrame {
 
             if (resultSet.next()) {
                 String role = resultSet.getString("role");
+                int bibliothequeId = resultSet.getInt("idBibliotheque"); // Récupération de l'ID de la bibliothèque
+
                 if ("admin".equalsIgnoreCase(role)) {
                     JOptionPane.showMessageDialog(this, "Bienvenue, Administrateur !");
                     dispose(); // Ferme la fenêtre de connexion
-                    new AdminDashboardFrame().setVisible(true); // Ouvre l'interface admin
+                    new AdminDashboardFrameBiblio(bibliothequeId).setVisible(true); // Redirige vers le tableau de bord admin
                 } else if ("bibliothecaire".equalsIgnoreCase(role)) {
                     JOptionPane.showMessageDialog(this, "Bienvenue, Bibliothécaire !");
                     dispose(); // Ferme la fenêtre de connexion
-                    new LibrarianDashboardFrame().setVisible(true); // Ouvre l'interface bibliothécaire
+                    new LibrarianDashboardFrame(bibliothequeId).setVisible(true); // Redirige vers le tableau de bord bibliothécaire
                 } else {
                     statusLabel.setText("Rôle inconnu.");
                 }
@@ -151,10 +153,9 @@ public class LoginFrame extends JFrame {
     }
 
     public static void main(String[] args) {
-    SwingUtilities.invokeLater(() -> {
-        LoginFrame loginFrame = new LoginFrame();
-        loginFrame.setVisible(true);
-    });
-}
-
+        SwingUtilities.invokeLater(() -> {
+            LoginFrame loginFrame = new LoginFrame();
+            loginFrame.setVisible(true);
+        });
+    }
 }

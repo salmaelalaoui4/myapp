@@ -6,10 +6,12 @@ import java.sql.*;
 import javax.swing.table.DefaultTableModel;
 
 public class AdminLibrarianManagementFrame extends JFrame {
+
+    private static int bibliothequeId;
     private JTable librarianTable;
     private DefaultTableModel tableModel;
 
-    public AdminLibrarianManagementFrame() {
+    public AdminLibrarianManagementFrame(int bibliothequeId) {
         setTitle("Gestion des Bibliothécaires");
         setSize(900, 600);
         setLocationRelativeTo(null);
@@ -149,6 +151,6 @@ public class AdminLibrarianManagementFrame extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new AdminLibrarianManagementFrame().setVisible(true));
+        SwingUtilities.invokeLater(() -> new AdminLibrarianManagementFrame(bibliothequeId).setVisible(true));
     }
 }
