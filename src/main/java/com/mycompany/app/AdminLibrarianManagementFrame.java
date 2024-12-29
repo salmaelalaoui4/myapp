@@ -35,10 +35,11 @@ public class AdminLibrarianManagementFrame extends JFrame {
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
         // Boutons
-        JPanel buttonPanel = new JPanel(new GridLayout(1, 3, 10, 10));
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 4, 10, 10));
         JButton btnAdd = new JButton("Ajouter");
         JButton btnDisable = new JButton("Désactiver");
         JButton btnDelete = new JButton("Supprimer");
+        JButton btnBackToDashboard = new JButton("Retour au Dashboard");  // Nouveau bouton pour revenir au Dashboard
 
     btnAdd.addActionListener(e -> {
     // Ouvrir le formulaire pour ajouter un bibliothécaire et passer la référence à la fenêtre admin
@@ -50,9 +51,19 @@ public class AdminLibrarianManagementFrame extends JFrame {
         btnDisable.addActionListener(e -> desactiverBibliothecaire());
         btnDelete.addActionListener(e -> supprimerBibliothecaire());
 
+         // Action pour le bouton Retour au Dashboard
+        btnBackToDashboard.addActionListener(e -> {
+            // Fermer la fenêtre actuelle
+            this.dispose();
+            // Ouvrir le Dashboard
+            AdminDashboardFrameBiblio dashboard = new AdminDashboardFrameBiblio(bibliothequeId);  // Remplace AdminDashboardFrameBiblio par le nom de ta fenêtre de dashboard
+            dashboard.setVisible(true);
+        });
+        
         buttonPanel.add(btnAdd);
         buttonPanel.add(btnDisable);
         buttonPanel.add(btnDelete);
+        buttonPanel.add(btnBackToDashboard);  // Ajouter le bouton au panel
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         chargerBibliothecaires();
