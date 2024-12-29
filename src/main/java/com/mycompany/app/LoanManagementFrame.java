@@ -7,10 +7,13 @@ import java.sql.*;
 
 public class LoanManagementFrame extends JFrame {
 
+    private static int bibliothequeId;
+
     private JTable loanTable;
     private DefaultTableModel tableModel;
 
-    public LoanManagementFrame() {
+    public LoanManagementFrame(int bibliothequeId) {
+        
         setTitle("Gestion des Emprunts et Retours");
         setSize(900, 600);
         setLocationRelativeTo(null);
@@ -200,6 +203,6 @@ private boolean clientExiste(int clientID) {
 
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new LoanManagementFrame().setVisible(true));
+        SwingUtilities.invokeLater(() -> new LoanManagementFrame(bibliothequeId).setVisible(true));
     }
 }

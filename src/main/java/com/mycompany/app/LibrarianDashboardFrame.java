@@ -34,13 +34,12 @@ public class LibrarianDashboardFrame extends JFrame {
         JButton btnManageClients = createButton("Gérer les Clients", e -> openManagementFrame("clients"));
         JButton btnManageBooks = createButton("Gérer les Livres", e -> openManagementFrame("books"));
         JButton btnConsultBorrowings = createButton("Consulter les Emprunts", e -> openManagementFrame("borrowings"));
-        JButton btnConsultExchanges = createButton("Consulter les Échanges", e -> openManagementFrame("exchanges"));
         JButton btnConsultPurchases = createButton("Consulter les Achats", e -> openManagementFrame("purchases"));
 
         buttonPanel.add(btnManageClients);
         buttonPanel.add(btnManageBooks);
         buttonPanel.add(btnConsultBorrowings);  // Nouveau bouton pour consulter les emprunts
-        buttonPanel.add(btnConsultExchanges);  // Nouveau bouton pour consulter les échanges
+       
         buttonPanel.add(btnConsultPurchases);  // Nouveau bouton pour consulter les achats
 
         mainPanel.add(buttonPanel, BorderLayout.CENTER);
@@ -68,11 +67,9 @@ public class LibrarianDashboardFrame extends JFrame {
                 managementFrame = new BooksDisplayForLibrarianFrame(bibliothequeId); // Passer l'ID de la bibliothèque
                 break;
             case "borrowings":
-                managementFrame = new LibrarianDashboardFrame(bibliothequeId); // Nouveau cadre pour gérer les emprunts
+                managementFrame = new LoanManagementFrame(bibliothequeId); // Nouveau cadre pour gérer les emprunts
                 break;
-            case "exchanges":
-                managementFrame = new ExchangeManagementFrame(bibliothequeId); // Nouveau cadre pour gérer les échanges
-                break;
+     
             case "purchases":
                 managementFrame = new AchatManagementFrame(bibliothequeId); // Nouveau cadre pour gérer les achats
                 break;

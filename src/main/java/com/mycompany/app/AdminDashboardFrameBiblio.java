@@ -52,13 +52,6 @@ public class AdminDashboardFrameBiblio extends JFrame {
         btnManageBooks.setFocusPainted(false);
         btnManageBooks.addActionListener(e -> new BooksDisplayFrame(bibliothequeId).setVisible(true));
 
-        // Bouton pour consulter les emprunts
-        JButton btnConsultLoans = new JButton("Consulter les Emprunts");
-        btnConsultLoans.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        btnConsultLoans.setBackground(new Color(0, 184, 148));
-        btnConsultLoans.setForeground(Color.WHITE);
-        btnConsultLoans.setFocusPainted(false);
-        btnConsultLoans.addActionListener(e -> new AdminLoanManagementFrame(bibliothequeId).setVisible(true));
 
         // Bouton pour consulter les échanges
         JButton btnConsultExchanges = new JButton("Consulter les Échanges");
@@ -72,7 +65,7 @@ public class AdminDashboardFrameBiblio extends JFrame {
         buttonPanel.add(btnManageLibrarians);
         buttonPanel.add(btnConsultPurchases);
         buttonPanel.add(btnManageBooks);
-        buttonPanel.add(btnConsultLoans);
+        
         buttonPanel.add(btnConsultExchanges);
 
         mainPanel.add(buttonPanel, BorderLayout.CENTER);
