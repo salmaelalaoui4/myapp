@@ -30,7 +30,7 @@ public class LibrarianDashboardFrame extends JFrame {
         JPanel buttonPanel = new JPanel(new GridLayout(3, 1, 20, 20));
         buttonPanel.setBackground(new Color(45, 52, 54));
 
-        // Créer une méthode générique pour gérer les clics sur les boutons
+        // Boutons pour les fonctionnalités
         JButton btnManageClients = createButton("Gérer les Clients", e -> openManagementFrame("clients"));
         JButton btnManageBooks = createButton("Gérer les Livres", e -> openManagementFrame("books"));
 
@@ -55,10 +55,9 @@ public class LibrarianDashboardFrame extends JFrame {
     private void openManagementFrame(String type) {
         JFrame managementFrame;
         if ("clients".equals(type)) {
-            managementFrame = new ClientManagementFrame();
+            managementFrame = new ClientManagementFrame(bibliothequeId); // Passer l'ID de la bibliothèque
         } else if ("books".equals(type)) {
-            // Ouvrir la fenêtre pour afficher les livres en mode lecture seule pour les bibliothécaires
-            managementFrame = new BooksDisplayForLibrarianFrame(bibliothequeId); 
+            managementFrame = new BooksDisplayForLibrarianFrame(bibliothequeId); // Passer l'ID de la bibliothèque
         } else {
             return;
         }
