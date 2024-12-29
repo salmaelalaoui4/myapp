@@ -66,4 +66,5 @@ public class AdminDashboardFrameBiblio extends JFrame {
             frame.setVisible(true);
         });
     }
+
 }
