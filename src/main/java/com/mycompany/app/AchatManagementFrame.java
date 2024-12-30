@@ -1,122 +1,105 @@
 package com.mycompany.app;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.*;
+import java.text.SimpleDateFormat;
+import javax.swing.table.DefaultTableModel;
 
 public class AchatManagementFrame extends JFrame {
+    private JTable achatsTable;
+    private int idBibliotheque;
 
-    private JTable achatTable;
-    private DefaultTableModel tableModel;
-    private int bibliothequeId;
-
-    public AchatManagementFrame(int bibliothequeId) {
-        this.bibliothequeId = bibliothequeId;
+    public AchatManagementFrame(int idBibliotheque) {
+        this.idBibliotheque = idBibliotheque;
 
         setTitle("Gestion des Achats");
-        setSize(1000, 600); // Augmenté pour garantir l'affichage
+        setSize(900, 600);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        // Panel principal
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         add(mainPanel);
 
-        // Titre
         JLabel lblTitle = new JLabel("Gestion des Achats", SwingConstants.CENTER);
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         mainPanel.add(lblTitle, BorderLayout.NORTH);
 
-        // Tableau des achats
-        tableModel = new DefaultTableModel(new String[]{
-                "ID Achat", "ID Livre", "Date Achat", "Quantité", "Statut", "ID Bibliothécaire"
-        }, 0);
-        achatTable = new JTable(tableModel);
-        JScrollPane scrollPane = new JScrollPane(achatTable);
-        mainPanel.add(scrollPane, BorderLayout.CENTER);
-
-        // Boutons
-        JPanel buttonPanel = new JPanel(new GridLayout(1, 3, 10, 10)); // 3 colonnes pour les boutons
-        JButton btnValidate = new JButton("Valider");
-        JButton btnReject = new JButton("Rejeter");
-        JButton btnBackToDashboard = new JButton("Retour au Dashboard");
-
-        btnValidate.addActionListener(e -> changerStatutAchat("validé"));
-        btnReject.addActionListener(e -> changerStatutAchat("rejeté"));
-
-        btnBackToDashboard.addActionListener(e -> {
-            this.dispose(); // Fermer la fenêtre actuelle
-            AdminDashboardFrameBiblio dashboard = new AdminDashboardFrameBiblio(bibliothequeId);
-            dashboard.setVisible(true); // Ouvrir le tableau de bord
-        });
-
-        buttonPanel.add(btnValidate);
-        buttonPanel.add(btnReject);
-        buttonPanel.add(btnBackToDashboard);
-
-        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+        JPanel tablePanel = new JPanel(new BorderLayout());
+        achatsTable = new JTable();
+        JScrollPane tableScrollPane = new JScrollPane(achatsTable);
+        tablePanel.add(tableScrollPane, BorderLayout.CENTER);
+        mainPanel.add(tablePanel, BorderLayout.CENTER);
 
         chargerAchats();
+
+        JButton btnEnregistrerAchat = new JButton("Enregistrer un Achat");
+        btnEnregistrerAchat.addActionListener(e -> afficherFormulaireAchat());
+        JPanel buttonPanel = new JPanel(new FlowLayout());
+        buttonPanel.add(btnEnregistrerAchat);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
     }
 
     private void chargerAchats() {
         try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-            String query = "SELECT * FROM achat WHERE idBibliotheque = ?";
+            String query = "SELECT idAchat, idLivre, dateAchat, quantite, statutValidation FROM achat WHERE idBibliotheque = ?";
             try (PreparedStatement statement = connection.prepareStatement(query)) {
-                statement.setInt(1, bibliothequeId);
+                statement.setInt(1, idBibliotheque);
                 try (ResultSet resultSet = statement.executeQuery()) {
-                    tableModel.setRowCount(0);
+                    DefaultTableModel model = new DefaultTableModel();
+                    model.addColumn("ID Achat");
+                    model.addColumn("ID Livre");
+                    model.addColumn("Date Achat");
+                    model.addColumn("Quantité");
+                    model.addColumn("Statut Validation");
+
                     while (resultSet.next()) {
-                        tableModel.addRow(new Object[]{
+                        model.addRow(new Object[]{
                                 resultSet.getInt("idAchat"),
                                 resultSet.getInt("idLivre"),
                                 resultSet.getDate("dateAchat"),
                                 resultSet.getInt("quantite"),
-                                resultSet.getString("statutValidation"),
-                                resultSet.getInt("idBibliothecaire")
+                                resultSet.getInt("statutValidation") == 1 ? "Validé" : "En attente"
                         });
                     }
+                    achatsTable.setModel(model);
                 }
             }
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Erreur lors du chargement des achats : " + e.getMessage(),
-                    "Erreur", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Erreur lors du chargement des achats : " + e.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private void changerStatutAchat(String nouveauStatut) {
-        int selectedRow = achatTable.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Veuillez sélectionner un achat !", "Attention", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
+    private void afficherFormulaireAchat() {
+        AchatFormulaireFrame formulaireFrame = new AchatFormulaireFrame(idBibliotheque, this);
+        formulaireFrame.setVisible(true);
+    }
 
-        int idAchat = (int) tableModel.getValueAt(selectedRow, 0);
-
+    public void enregistrerAchat(int idLivre, int idClient, java.sql.Date dateAchat, int quantite, int statutValidation) {
         try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-            String query = "UPDATE achat SET statutValidation = ? WHERE idAchat = ?";
+            String query = "INSERT INTO achat (idLivre, idClient, dateAchat, quantite, statutValidation, idBibliotheque) VALUES (?, ?, ?, ?, ?, ?)";
             try (PreparedStatement statement = connection.prepareStatement(query)) {
-                statement.setString(1, nouveauStatut);
-                statement.setInt(2, idAchat);
-                int rowsAffected = statement.executeUpdate();
-                if (rowsAffected > 0) {
-                    JOptionPane.showMessageDialog(this, "L'achat a été " + nouveauStatut + " avec succès !");
-                    chargerAchats();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Aucun achat trouvé pour mettre à jour.", "Erreur", JOptionPane.ERROR_MESSAGE);
-                }
+                statement.setInt(1, idLivre);
+                statement.setInt(2, idClient);
+                statement.setDate(3, dateAchat);
+                statement.setInt(4, quantite);
+                statement.setInt(5, statutValidation);
+                statement.setInt(6, idBibliotheque);
+
+                statement.executeUpdate();
+
+                chargerAchats();
             }
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Erreur lors de la mise à jour du statut : " + e.getMessage(),
-                    "Erreur", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Erreur lors de l'enregistrement de l'achat : " + e.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new AchatManagementFrame(1).setVisible(true)); // Remplacez 1 par l'ID de votre bibliothèque
+        int idBibliotheque = 1; // Exemple d'ID bibliothèque
+        SwingUtilities.invokeLater(() -> new AchatManagementFrame(idBibliotheque).setVisible(true));
     }
 }

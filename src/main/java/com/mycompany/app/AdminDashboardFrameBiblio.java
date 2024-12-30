@@ -9,7 +9,7 @@ public class AdminDashboardFrameBiblio extends JFrame {
         setTitle("Tableau de Bord - Administrateur Bibliothèque " + bibliothequeId);
         setSize(900, 600);
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         // Panel principal
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));

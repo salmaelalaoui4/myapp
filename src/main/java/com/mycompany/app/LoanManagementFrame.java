@@ -4,16 +4,18 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class LoanManagementFrame extends JFrame {
 
-    private static int bibliothequeId;
-
+    private int bibliothequeId;
     private JTable loanTable;
     private DefaultTableModel tableModel;
 
     public LoanManagementFrame(int bibliothequeId) {
-        
+        this.bibliothequeId = bibliothequeId;
+
         setTitle("Gestion des Emprunts et Retours");
         setSize(900, 600);
         setLocationRelativeTo(null);
@@ -30,117 +32,96 @@ public class LoanManagementFrame extends JFrame {
         mainPanel.add(lblTitle, BorderLayout.NORTH);
 
         // Tableau des emprunts
-        tableModel = new DefaultTableModel(new String[]{"ID Emprunt", "ID Livre", "ID Client", "Date Emprunt", "Date Retour Prévue", "Statut"}, 0);
+        tableModel = new DefaultTableModel(new String[] {
+            "ID Emprunt", "ID Livre", "ID Client", "Date Emprunt",
+            "Date Retour Prévue", "Date Retour Effective", "Statut"
+        }, 0);
         loanTable = new JTable(tableModel);
         JScrollPane scrollPane = new JScrollPane(loanTable);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
         // Boutons
-        JPanel buttonPanel = new JPanel(new GridLayout(2, 1, 10, 10));
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 10, 10));
         JButton btnLoan = new JButton("Enregistrer un Emprunt");
         JButton btnReturn = new JButton("Valider un Retour");
 
-        btnLoan.addActionListener(e -> enregistrerEmprunt());
+        btnLoan.addActionListener(e -> afficherFormulaireEmprunt());
         btnReturn.addActionListener(e -> validerRetour());
 
         buttonPanel.add(btnLoan);
         buttonPanel.add(btnReturn);
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
-        chargerEmprunts();
+        chargerEmprunts();  // Charger les emprunts au démarrage de l'interface
     }
 
     private void chargerEmprunts() {
-        tableModel.setRowCount(0);
-        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-            String query = "SELECT * FROM emprunt";
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(query);
+        System.out.println("Chargement des emprunts pour la bibliothèque ID: " + bibliothequeId);
+        tableModel.setRowCount(0); // Réinitialiser le tableau avant d'ajouter les nouvelles lignes
 
-            while (resultSet.next()) {
-                tableModel.addRow(new Object[]{
-                        resultSet.getInt("idEmprunt"),
-                        resultSet.getInt("idLivre"),
-                        resultSet.getInt("idClient"),
-                        resultSet.getDate("dateEmprunt"),
-                        resultSet.getDate("dateRetourPrevue"),
-                        resultSet.getBoolean("statut") ? "Retourné" : "En Cours"
-                });
+        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
+            String query = "SELECT * FROM emprunt WHERE idBibliotheque = ?";
+            try (PreparedStatement statement = connection.prepareStatement(query)) {
+                statement.setInt(1, bibliothequeId);  // Passer l'ID de la bibliothèque
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    while (resultSet.next()) {
+                        String statutEmprunt = resultSet.getString("statut");
+                        tableModel.addRow(new Object[] {
+                            resultSet.getInt("idEmprunt"),
+                            resultSet.getInt("idLivre"),
+                            resultSet.getInt("idClient"),
+                            resultSet.getDate("dateEmprunt"),
+                            resultSet.getDate("dateRetourPrevue"),
+                            resultSet.getDate("dateRetourEffective"),
+                            statutEmprunt  // Afficher le statut
+                        });
+                    }
+                }
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Erreur lors du chargement des emprunts : " + e.getMessage());
         }
     }
 
-    private void enregistrerEmprunt() {
-    String idLivre = JOptionPane.showInputDialog(this, "ID du Livre :");
-    String idClient = JOptionPane.showInputDialog(this, "ID du Client :");
-    String dateRetourPrevue = JOptionPane.showInputDialog(this, "Date Retour Prévue (YYYY-MM-DD) :");
+    public void enregistrerEmprunt(int idLivre, int idClient, Date dateEmprunt, Date dateRetourPrevue) {
+        String statut = "en cours"; // Par défaut, le statut est "en cours"
+        Date currentDate = new Date(System.currentTimeMillis());
 
-    // Validation des entrées
-    if (idLivre == null || idClient == null || dateRetourPrevue == null || idLivre.trim().isEmpty() || idClient.trim().isEmpty() || dateRetourPrevue.trim().isEmpty()) {
-        JOptionPane.showMessageDialog(this, "Tous les champs doivent être remplis.");
-        return;
-    }
-
-    try {
-        int livreID = Integer.parseInt(idLivre);
-        int clientID = Integer.parseInt(idClient);
-
-        // Vérification que le livre et le client existent
-        if (!livreExiste(livreID) || !clientExiste(clientID)) {
-            JOptionPane.showMessageDialog(this, "Le livre ou le client n'existe pas.");
-            return;
+        // Si la date de retour prévue est dépassée, changer le statut à "en retard"
+        if (dateRetourPrevue.before(currentDate)) {
+            statut = "en retard";
         }
 
-        // Enregistrer l'emprunt
         try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-            String query = "INSERT INTO emprunt (idLivre, idClient, dateEmprunt, dateRetourPrevue, statut) VALUES (?, ?, NOW(), ?, 0)";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setInt(1, livreID);
-            statement.setInt(2, clientID);
-            statement.setString(3, dateRetourPrevue);
-            statement.executeUpdate();
-            JOptionPane.showMessageDialog(this, "Emprunt enregistré avec succès !");
-            chargerEmprunts();
+            String query = "INSERT INTO emprunt (idLivre, idClient, idBibliotheque, dateEmprunt, dateRetourPrevue, statut) VALUES (?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement statement = connection.prepareStatement(query)) {
+                statement.setInt(1, idLivre);
+                statement.setInt(2, idClient);
+                statement.setInt(3, bibliothequeId);
+                statement.setDate(4, dateEmprunt);
+                statement.setDate(5, dateRetourPrevue);
+                statement.setString(6, statut);  // Insérer le statut calculé
+
+                int rowsInserted = statement.executeUpdate();
+                if (rowsInserted > 0) {
+                    JOptionPane.showMessageDialog(null, "Emprunt enregistré avec succès !");
+                    chargerEmprunts();  // Recharger les emprunts après insertion
+                } else {
+                    JOptionPane.showMessageDialog(null, "Erreur lors de l'enregistrement de l'emprunt.");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Erreur lors de l'enregistrement de l'emprunt : " + e.getMessage());
         }
-    } catch (NumberFormatException e) {
-        JOptionPane.showMessageDialog(this, "L'ID du livre et de l'emprunteur doivent être des entiers.");
-    } catch (Exception e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Erreur lors de l'enregistrement de l'emprunt : " + e.getMessage());
     }
-}
 
-private boolean livreExiste(int livreID) {
-    try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-        String query = "SELECT COUNT(*) FROM livre WHERE idLivre = ?";
-        PreparedStatement statement = connection.prepareStatement(query);
-        statement.setInt(1, livreID);
-        ResultSet resultSet = statement.executeQuery();
-        resultSet.next();
-        return resultSet.getInt(1) > 0;
-    } catch (SQLException e) {
-        e.printStackTrace();
+    private void afficherFormulaireEmprunt() {
+        // Ouvrir un formulaire pour enregistrer un emprunt (à implémenter)
+        // EmpruntFormulaireFrame formulaireFrame = new EmpruntFormulaireFrame(this, bibliothequeId);
+        // formulaireFrame.setVisible(true);
     }
-    return false;
-}
-
-private boolean clientExiste(int clientID) {
-    try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-        String query = "SELECT COUNT(*) FROM client WHERE idClient = ?";
-        PreparedStatement statement = connection.prepareStatement(query);
-        statement.setInt(1, clientID);
-        ResultSet resultSet = statement.executeQuery();
-        resultSet.next();
-        return resultSet.getInt(1) > 0;
-    } catch (SQLException e) {
-        e.printStackTrace();
-    }
-    return false;
-}
-
 
     private void validerRetour() {
         int selectedRow = loanTable.getSelectedRow();
@@ -150,59 +131,40 @@ private boolean clientExiste(int clientID) {
         }
 
         int idEmprunt = (int) tableModel.getValueAt(selectedRow, 0);
+        String statutEmprunt = (String) tableModel.getValueAt(selectedRow, 6);
+        if ("Retourné".equals(statutEmprunt)) {
+            JOptionPane.showMessageDialog(this, "Cet emprunt a déjà été retourné.");
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this, "Voulez-vous vraiment valider ce retour ?", "Confirmation", JOptionPane.YES_NO_OPTION);
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
 
         try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-            String query = "UPDATE emprunt SET dateRetourEffective = NOW(), statut = 1 WHERE idEmprunt = ?";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setInt(1, idEmprunt);
-            statement.executeUpdate();
-            JOptionPane.showMessageDialog(this, "Retour validé avec succès !");
-            chargerEmprunts();
-        } catch (Exception e) {
+            String query = "UPDATE emprunt SET dateRetourEffective = NOW(), statut = 'retourné' WHERE idEmprunt = ?";
+            try (PreparedStatement statement = connection.prepareStatement(query)) {
+                statement.setInt(1, idEmprunt);
+                int rowsUpdated = statement.executeUpdate();
+                if (rowsUpdated > 0) {
+                    JOptionPane.showMessageDialog(this, "Retour validé avec succès !");
+                    chargerEmprunts();  // Recharger les emprunts après le retour
+                } else {
+                    JOptionPane.showMessageDialog(this, "Erreur lors de la validation du retour.");
+                }
+            }
+        } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Erreur lors de la validation du retour : " + e.getMessage());
         }
     }
-    private int selectionnerLivre() {
-    DefaultListModel<String> listModel = new DefaultListModel<>();
-    JList<String> bookList = new JList<>(listModel);
-    bookList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-    try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-        String query = "SELECT idLivre, titre FROM livre WHERE statut = 1";
-        Statement statement = connection.createStatement();
-        ResultSet resultSet = statement.executeQuery(query);
-
-        while (resultSet.next()) {
-            int idLivre = resultSet.getInt("idLivre");
-            String titre = resultSet.getString("titre");
-            listModel.addElement(idLivre + " - " + titre);
-        }
-    } catch (Exception e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Erreur lors du chargement des livres : " + e.getMessage());
-    }
-
-    if (listModel.isEmpty()) {
-        JOptionPane.showMessageDialog(this, "Aucun livre disponible.");
-        return -1;
-    }
-
-    int result = JOptionPane.showConfirmDialog(this, new JScrollPane(bookList), "Choisissez un Livre",
-            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-
-    if (result == JOptionPane.OK_OPTION) {
-        String selectedValue = bookList.getSelectedValue();
-        if (selectedValue != null) {
-            return Integer.parseInt(selectedValue.split(" - ")[0]); // Retourne l'ID du livre
-        }
-    }
-
-    return -1;
-}
-
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new LoanManagementFrame(bibliothequeId).setVisible(true));
+        int bibliothequeId = 1;  // Exemple : bibliothèque avec ID 1
+        SwingUtilities.invokeLater(() -> {
+            LoanManagementFrame frame = new LoanManagementFrame(bibliothequeId);
+            frame.setVisible(true);
+        });
     }
 }

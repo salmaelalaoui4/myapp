@@ -14,7 +14,7 @@ public class BookManagementFrame extends JFrame {
         setTitle("Gestion des Livres");
         setSize(800, 600);
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         // Panel principal
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
@@ -36,7 +36,7 @@ public class BookManagementFrame extends JFrame {
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
         // Boutons
-        JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 20, 20));
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 3, 20, 20));
         buttonPanel.setBackground(new Color(45, 52, 54));
 
         JButton btnAddBook = new JButton("Ajouter un Livre");
@@ -49,7 +49,23 @@ public class BookManagementFrame extends JFrame {
             addBookFrame.setVisible(true);
         });
 
+        JButton btnEditBook = new JButton("Modifier un Livre");
+        btnEditBook.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        btnEditBook.setBackground(new Color(0, 123, 255));
+        btnEditBook.setForeground(Color.WHITE);
+        btnEditBook.setFocusPainted(false);
+        btnEditBook.addActionListener(e -> modifierLivre());
+
+        JButton btnDeleteBook = new JButton("Supprimer un Livre");
+        btnDeleteBook.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        btnDeleteBook.setBackground(new Color(255, 0, 0));
+        btnDeleteBook.setForeground(Color.WHITE);
+        btnDeleteBook.setFocusPainted(false);
+        btnDeleteBook.addActionListener(e -> supprimerLivre());
+
         buttonPanel.add(btnAddBook);
+        buttonPanel.add(btnEditBook);
+        buttonPanel.add(btnDeleteBook);
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         chargerLivres();  // Charger les livres lors de l'initialisation
@@ -79,6 +95,52 @@ public class BookManagementFrame extends JFrame {
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Erreur lors du chargement des livres : " + e.getMessage());
+        }
+    }
+
+    // Méthode pour modifier un livre sélectionné
+    private void modifierLivre() {
+        int selectedRow = bookTable.getSelectedRow();
+        if (selectedRow != -1) {
+            // Récupérer l'ID du livre sélectionné
+            int idLivre = (int) tableModel.getValueAt(selectedRow, 0);
+            // Ouvrir la fenêtre de modification avec l'ID du livre
+            EditBookFrame editBookFrame = new EditBookFrame(this, idLivre);
+            editBookFrame.setVisible(true);
+        } else {
+            JOptionPane.showMessageDialog(this, "Veuillez sélectionner un livre à modifier.");
+        }
+    }
+
+    // Méthode pour supprimer un livre sélectionné
+    private void supprimerLivre() {
+        int selectedRow = bookTable.getSelectedRow();
+        if (selectedRow != -1) {
+            // Récupérer l'ID du livre sélectionné
+            int idLivre = (int) tableModel.getValueAt(selectedRow, 0);
+            // Demander une confirmation avant de supprimer
+            int confirm = JOptionPane.showConfirmDialog(this, "Êtes-vous sûr de vouloir supprimer ce livre ?", "Confirmation", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
+                    // Requête pour supprimer le livre de la base de données
+                    String query = "DELETE FROM livre WHERE idLivre = ?";
+                    PreparedStatement statement = connection.prepareStatement(query);
+                    statement.setInt(1, idLivre);
+                    int rowsAffected = statement.executeUpdate();
+                    if (rowsAffected > 0) {
+                        // Suppression réussie, mettre à jour le tableau
+                        tableModel.removeRow(selectedRow);
+                        JOptionPane.showMessageDialog(this, "Livre supprimé avec succès.");
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Erreur lors de la suppression du livre.");
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "Erreur lors de la suppression du livre : " + e.getMessage());
+                }
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Veuillez sélectionner un livre à supprimer.");
         }
     }
 

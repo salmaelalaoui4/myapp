@@ -7,6 +7,7 @@ import java.awt.event.ActionListener;
 public class LibrarianDashboardFrame extends JFrame {
 
     private int bibliothequeId;
+    private int idBibliothecaire;
 
     public LibrarianDashboardFrame(int bibliothequeId) {
         this.bibliothequeId = bibliothequeId; // Stocker l'ID de la bibliothèque
@@ -34,6 +35,7 @@ public class LibrarianDashboardFrame extends JFrame {
         JButton btnManageClients = createButton("Gérer les Clients", e -> openManagementFrame("clients"));
         JButton btnManageBooks = createButton("Gérer les Livres", e -> openManagementFrame("books"));
         JButton btnConsultBorrowings = createButton("Consulter les Emprunts", e -> openManagementFrame("borrowings"));
+        
         JButton btnConsultPurchases = createButton("Consulter les Achats", e -> openManagementFrame("purchases"));
 
         buttonPanel.add(btnManageClients);
@@ -42,7 +44,7 @@ public class LibrarianDashboardFrame extends JFrame {
        
         buttonPanel.add(btnConsultPurchases);  // Nouveau bouton pour consulter les achats
 
-        mainPanel.add(buttonPanel, BorderLayout.CENTER);
+        mainPanel.add(buttonPanel, BorderLayout.CENTER); 
     }
 
     // Méthode générique pour créer des boutons
@@ -67,7 +69,9 @@ public class LibrarianDashboardFrame extends JFrame {
                 managementFrame = new BooksDisplayForLibrarianFrame(bibliothequeId); // Passer l'ID de la bibliothèque
                 break;
             case "borrowings":
-                managementFrame = new LoanManagementFrame(bibliothequeId); // Nouveau cadre pour gérer les emprunts
+                managementFrame = new LoanManagementFrame(bibliothequeId);
+               
+// Nouveau cadre pour gérer les emprunts
                 break;
      
             case "purchases":

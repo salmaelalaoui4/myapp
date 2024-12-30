@@ -6,72 +6,77 @@ import java.sql.*;
 
 public class AddBookFrame extends JFrame {
 
-    private BookManagementFrame parent;  // Référence du parent
+    private BookManagementFrame parentFrame;  // Reference to parent frame
+    private int libraryId; // ID de la bibliothèque
 
-    public AddBookFrame(BookManagementFrame parent) {
-        this.parent = parent;  // Stockez la référence du parent
+    public AddBookFrame(BookManagementFrame parentFrame) {
+        this.parentFrame = parentFrame; // Store parent reference
+        this.libraryId = 1;  // Default value for now (you can pass it dynamically)
 
         setTitle("Ajouter un Livre");
-        setSize(600, 400);
+        setSize(400, 500);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        // Panel principal
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new GridLayout(5, 2, 10, 10));
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        add(mainPanel);
+        JPanel mainPanel = new JPanel(new GridLayout(6, 2, 10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Champs pour les informations du livre
-        JTextField txtTitle = new JTextField();
-        JTextField txtAuthor = new JTextField();
-        JTextField txtIsbn = new JTextField();
-        JTextField txtYear = new JTextField();
-        JTextArea txtDescription = new JTextArea();
-        JScrollPane scrollDescription = new JScrollPane(txtDescription);
+        JLabel lblTitre = new JLabel("Titre:");
+        JTextField txtTitre = new JTextField();
 
-        // Ajouter les composants
-        mainPanel.add(new JLabel("Titre :"));
-        mainPanel.add(txtTitle);
-        mainPanel.add(new JLabel("Auteur :"));
-        mainPanel.add(txtAuthor);
-        mainPanel.add(new JLabel("ISBN :"));
-        mainPanel.add(txtIsbn);
-        mainPanel.add(new JLabel("Année de publication :"));
-        mainPanel.add(txtYear);
-        mainPanel.add(new JLabel("Description :"));
-        mainPanel.add(scrollDescription);
+        JLabel lblAuteur = new JLabel("Auteur:");
+        JTextField txtAuteur = new JTextField();
 
-        // Bouton pour enregistrer le livre
+        JLabel lblAnnee = new JLabel("Année:");
+        JTextField txtAnnee = new JTextField();
+
+        JLabel lblISBN = new JLabel("ISBN:");
+        JTextField txtISBN = new JTextField();
+
+        JLabel lblPhoto = new JLabel("Photo (chemin):");
+        JTextField txtPhoto = new JTextField();
+
         JButton btnSave = new JButton("Enregistrer");
         btnSave.addActionListener(e -> {
-            // Code pour ajouter un livre à la base de données
-            ajouterLivre(txtTitle.getText(), txtAuthor.getText(), txtIsbn.getText(), txtYear.getText(), txtDescription.getText());
+            String titre = txtTitre.getText();
+            String auteur = txtAuteur.getText();
+            String annee = txtAnnee.getText();
+            String isbn = txtISBN.getText();
+            String photo = txtPhoto.getText();
 
-            // Rafraîchir la liste des livres dans le parent
-            parent.chargerLivres();  // Appeler la méthode de rafraîchissement
-            dispose();  // Fermer la fenêtre d'ajout
+            try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
+                String query = "INSERT INTO livre (titre, auteur, anneePublication, isbn, photo, idBibliotheque) VALUES (?, ?, ?, ?, ?, ?)";
+                PreparedStatement statement = connection.prepareStatement(query);
+                statement.setString(1, titre);
+                statement.setString(2, auteur);
+                statement.setString(3, annee);
+                statement.setString(4, isbn);
+                statement.setString(5, photo);
+                statement.setInt(6, libraryId);
+
+                statement.executeUpdate();
+                JOptionPane.showMessageDialog(this, "Livre ajouté avec succès !");
+                parentFrame.chargerLivres();  // Refresh the parent frame's book list
+                dispose(); // Close the window
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Erreur lors de l'ajout du livre : " + ex.getMessage());
+            }
         });
 
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.add(btnSave);
-        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
-    }
+        mainPanel.add(lblTitre);
+        mainPanel.add(txtTitre);
+        mainPanel.add(lblAuteur);
+        mainPanel.add(txtAuteur);
+        mainPanel.add(lblAnnee);
+        mainPanel.add(txtAnnee);
+        mainPanel.add(lblISBN);
+        mainPanel.add(txtISBN);
+        mainPanel.add(lblPhoto);
+        mainPanel.add(txtPhoto);
+        mainPanel.add(new JLabel()); // Espace vide
+        mainPanel.add(btnSave);
 
-    private void ajouterLivre(String title, String author, String isbn, String year, String description) {
-        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-            String query = "INSERT INTO livre (titre, auteur, isbn, anneePublication, description) VALUES (?, ?, ?, ?, ?)";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setString(1, title);
-            statement.setString(2, author);
-            statement.setString(3, isbn);
-            statement.setString(4, year);
-            statement.setString(5, description);
-
-            statement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Erreur lors de l'ajout du livre : " + e.getMessage());
-        }
+        add(mainPanel);
     }
 }

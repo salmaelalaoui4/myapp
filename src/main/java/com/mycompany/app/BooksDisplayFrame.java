@@ -22,7 +22,6 @@ public class BooksDisplayFrame extends JFrame {
         //setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-
         // Panel principal
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBackground(new Color(45, 52, 54));
@@ -50,6 +49,20 @@ public class BooksDisplayFrame extends JFrame {
 
         // Charger les livres
         chargerLivres();
+
+        // Ajouter un bouton pour accéder à la gestion des livres
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.setBackground(new Color(45, 52, 54));
+
+        JButton btnAddBook = new JButton("Ajouter un Livre");
+        btnAddBook.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        btnAddBook.setBackground(new Color(0, 184, 148));
+        btnAddBook.setForeground(Color.WHITE);
+        btnAddBook.setFocusPainted(false);
+        btnAddBook.addActionListener(e -> ouvrirFormulaireAjoutLivre());
+
+        buttonPanel.add(btnAddBook);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
     }
 
     private void chargerLivres() {
