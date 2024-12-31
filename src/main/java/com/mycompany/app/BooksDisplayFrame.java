@@ -19,7 +19,6 @@ public class BooksDisplayFrame extends JFrame {
         setTitle("Livres Disponibles");
         setSize(1000, 700);
         setLocationRelativeTo(null);
-        //setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         // Panel principal
@@ -98,7 +97,7 @@ public class BooksDisplayFrame extends JFrame {
                 // Ajouter les informations du livre
                 String bookInfo = "<html><b>" + resultSet.getString("titre") + "</b><br>" +
                         "Auteur : " + resultSet.getString("auteur") + "<br>" +
-                        "ISBN : " + resultSet.getString("isbn") + "</html>";
+                        "ISBN : " + resultSet.getString("isbn")+"</b><br>" +"Quantité disponible : "+ resultSet.getString("quantiteDisponible") + "</html>";
                 JLabel infoLabel = new JLabel(bookInfo, SwingConstants.CENTER);
                 infoLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
                 infoLabel.setForeground(new Color(241, 242, 246));
@@ -143,9 +142,10 @@ public class BooksDisplayFrame extends JFrame {
                 String annee = resultSet.getString("anneePublication");
                 String description = resultSet.getString("description");
                 String photoPath = resultSet.getString("photo");
+                String quantiteDisponible = resultSet.getString("quantiteDisponible");
 
                 // Affichage dans une nouvelle fenêtre
-                BookDetailsFrame bookDetailsFrame = new BookDetailsFrame(titre, auteur, annee, isbn, description, photoPath);
+                BookDetailsFrame bookDetailsFrame = new BookDetailsFrame(titre, auteur, annee, isbn, description, photoPath,quantiteDisponible);
                 bookDetailsFrame.setVisible(true);
             }
         } catch (SQLException e) {

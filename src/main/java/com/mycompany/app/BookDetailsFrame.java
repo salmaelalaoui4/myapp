@@ -6,7 +6,7 @@ import java.io.File;
 
 public class BookDetailsFrame extends JFrame {
 
-    public BookDetailsFrame(String titre, String auteur, String annee, String isbn, String description, String photoPath) {
+    public BookDetailsFrame(String titre, String auteur, String annee, String isbn, String description, String photoPath, String quantiteDisponible) {
         // Configuration de la fenêtre
         setTitle("Détails du Livre");
         setSize(800, 600); // Augmenter la taille pour une meilleure disposition

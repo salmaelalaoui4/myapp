@@ -125,9 +125,10 @@ public class BooksDisplayForLibrarianFrame extends JFrame {
                 String annee = resultSet.getString("anneePublication");
                 String description = resultSet.getString("description");
                 String photoPath = resultSet.getString("photo");
+                String quantiteDisponible = resultSet.getString("quantiteDisponible");
 
                 // Affichage dans une nouvelle fenêtre
-                BookDetailsFrame bookDetailsFrame = new BookDetailsFrame(titre, auteur, annee, isbn, description, photoPath);
+                BookDetailsFrame bookDetailsFrame = new BookDetailsFrame(titre, auteur, annee, isbn, description, photoPath, quantiteDisponible);
                 bookDetailsFrame.setVisible(true);
             }
         } catch (SQLException e) {

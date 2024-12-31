@@ -119,8 +119,8 @@ public class LoanManagementFrame extends JFrame {
 
     private void afficherFormulaireEmprunt() {
         // Ouvrir un formulaire pour enregistrer un emprunt (à implémenter)
-        // EmpruntFormulaireFrame formulaireFrame = new EmpruntFormulaireFrame(this, bibliothequeId);
-        // formulaireFrame.setVisible(true);
+         EmpruntFormulaireFrame formulaireFrame = new EmpruntFormulaireFrame(this, bibliothequeId);
+         formulaireFrame.setVisible(true);
     }
 
     private void validerRetour() {

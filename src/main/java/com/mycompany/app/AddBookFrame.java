@@ -18,7 +18,7 @@ public class AddBookFrame extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        JPanel mainPanel = new JPanel(new GridLayout(6, 2, 10, 10));
+        JPanel mainPanel = new JPanel(new GridLayout(8, 1, 10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         JLabel lblTitre = new JLabel("Titre:");
@@ -35,6 +35,15 @@ public class AddBookFrame extends JFrame {
 
         JLabel lblPhoto = new JLabel("Photo (chemin):");
         JTextField txtPhoto = new JTextField();
+        
+        JLabel lblquantiteDisponible = new JLabel("quantiteDisponible: ");
+        JTextField txtquantiteDisponible = new JTextField();
+        
+        JLabel lbldesc = new JLabel("description:");
+        JTextField txtdesc = new JTextField();
+        
+        
+        
 
         JButton btnSave = new JButton("Enregistrer");
         btnSave.addActionListener(e -> {
@@ -43,16 +52,21 @@ public class AddBookFrame extends JFrame {
             String annee = txtAnnee.getText();
             String isbn = txtISBN.getText();
             String photo = txtPhoto.getText();
+            String quantiteDisponible = txtquantiteDisponible.getText();
+            String description = txtdesc.getText();
+            
 
             try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-                String query = "INSERT INTO livre (titre, auteur, anneePublication, isbn, photo, idBibliotheque) VALUES (?, ?, ?, ?, ?, ?)";
+                String query = "INSERT INTO livre (titre, auteur, anneePublication, isbn, photo,quantiteDisponible,description, idBibliotheque) VALUES (?, ?, ?, ?, ?,?,?,?)";
                 PreparedStatement statement = connection.prepareStatement(query);
                 statement.setString(1, titre);
                 statement.setString(2, auteur);
                 statement.setString(3, annee);
                 statement.setString(4, isbn);
                 statement.setString(5, photo);
-                statement.setInt(6, libraryId);
+                statement.setString(6, quantiteDisponible);
+                statement.setString(7, description);
+                statement.setInt(8, libraryId);
 
                 statement.executeUpdate();
                 JOptionPane.showMessageDialog(this, "Livre ajouté avec succès !");
@@ -74,6 +88,10 @@ public class AddBookFrame extends JFrame {
         mainPanel.add(txtISBN);
         mainPanel.add(lblPhoto);
         mainPanel.add(txtPhoto);
+        mainPanel.add(lblquantiteDisponible);
+        mainPanel.add(txtquantiteDisponible);
+        mainPanel.add(lbldesc);
+        mainPanel.add(txtdesc);
         mainPanel.add(new JLabel()); // Espace vide
         mainPanel.add(btnSave);
 

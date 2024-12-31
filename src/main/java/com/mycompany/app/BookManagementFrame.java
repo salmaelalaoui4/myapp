@@ -88,6 +88,7 @@ public class BookManagementFrame extends JFrame {
                 String auteur = resultSet.getString("auteur");
                 String isbn = resultSet.getString("isbn");
                 String annee = resultSet.getString("anneePublication");
+                int quantiteDisponible = resultSet.getInt("quantiteDisponible");
 
                 // Ajouter les données du livre à la table
                 tableModel.addRow(new Object[]{idLivre, titre, auteur, annee, isbn});
