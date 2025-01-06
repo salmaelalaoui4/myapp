@@ -7,11 +7,11 @@ import java.sql.*;
 public class AddBookFrame extends JFrame {
 
     private BookManagementFrame parentFrame;  // Reference to parent frame
-    private int libraryId; // ID de la bibliothèque
+    private int bibliothequeId;
 
-    public AddBookFrame(BookManagementFrame parentFrame) {
+    public AddBookFrame(BookManagementFrame parentFrame,int userLibraryId) {
         this.parentFrame = parentFrame; // Store parent reference
-        this.libraryId = 1;  // Default value for now (you can pass it dynamically)
+        this.bibliothequeId = userLibraryId; 
 
         setTitle("Ajouter un Livre");
         setSize(400, 500);
@@ -66,7 +66,7 @@ public class AddBookFrame extends JFrame {
                 statement.setString(5, photo);
                 statement.setString(6, quantiteDisponible);
                 statement.setString(7, description);
-                statement.setInt(8, libraryId);
+                statement.setInt(8, bibliothequeId);
 
                 statement.executeUpdate();
                 JOptionPane.showMessageDialog(this, "Livre ajouté avec succès !");

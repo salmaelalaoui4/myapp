@@ -51,76 +51,108 @@ public class GestionAchatsAdminFrame extends JFrame {
     }
 
     private void chargerAchats() {
-    try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-        String query = "SELECT * FROM achat WHERE statutValidation = 0 AND idBibliotheque = ?";
-        try (PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setInt(1, bibliothequeId);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                tableModel.setRowCount(0); // Effacer les anciennes données
+        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
+            String query = "SELECT * FROM achat WHERE statutValidation = 0 AND idBibliotheque = ?";
+            try (PreparedStatement statement = connection.prepareStatement(query)) {
+                statement.setInt(1, bibliothequeId);
+                try (ResultSet resultSet = statement.executeQuery()) {
+                    tableModel.setRowCount(0); // Effacer les anciennes données
 
-                while (resultSet.next()) {
-                    int idAchat = resultSet.getInt("idAchat");
-                    int idClient = resultSet.getInt("idClient");
-                    int idLivre = resultSet.getInt("idLivre");
-                    int quantite = resultSet.getInt("quantite");
-                    int statutValue = resultSet.getInt("statutValidation");
+                    while (resultSet.next()) {
+                        int idAchat = resultSet.getInt("idAchat");
+                        int idClient = resultSet.getInt("idClient");
+                        int idLivre = resultSet.getInt("idLivre");
+                        int quantite = resultSet.getInt("quantite");
+                        int statutValue = resultSet.getInt("statutValidation");
 
-                    // Convertir les valeurs numériques en texte
-                    String statut = "En attente";
-                    if (statutValue == 1) statut = "Validé";
-                    else if (statutValue == 2) statut = "Rejeté";
+                        // Convertir les valeurs numériques en texte
+                        String statut = "En attente";
+                        if (statutValue == 1) {
+                            statut = "Validé";
+                        } else if (statutValue == 2) {
+                            statut = "Rejeté";
+                        }
 
-                    tableModel.addRow(new Object[]{idAchat, idClient, idLivre, quantite, statut});
+                        tableModel.addRow(new Object[]{idAchat, idClient, idLivre, quantite, statut});
+                    }
                 }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Erreur lors du chargement des achats : " + e.getMessage());
         }
-    } catch (SQLException e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Erreur lors du chargement des achats : " + e.getMessage());
     }
-}
-
 
     private void changerStatutAchat(String nouveauStatut) {
-    int selectedRow = achatTable.getSelectedRow();
-    if (selectedRow == -1) {
-        JOptionPane.showMessageDialog(this, "Veuillez sélectionner un achat !");
-        return;
-    }
-
-    int idAchat = (int) tableModel.getValueAt(selectedRow, 0);
-    int statutValue = 0;
-
-    // Mapper les statuts texte aux valeurs numériques
-    switch (nouveauStatut.toLowerCase()) {
-        case "validé":
-            statutValue = 1;
-            break;
-        case "rejeté":
-            statutValue = 2;
-            break;
-        case "en attente":
-        default:
-            statutValue = 0;
-            break;
-    }
-
-    try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-        String query = "UPDATE achat SET statutValidation = ? WHERE idAchat = ?";
-        try (PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setInt(1, statutValue); // Insérer la valeur numérique
-            statement.setInt(2, idAchat);
-            statement.executeUpdate();
+        int selectedRow = achatTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Veuillez sélectionner un achat !");
+            return;
         }
 
-        JOptionPane.showMessageDialog(this, "Achat " + nouveauStatut + " avec succès !");
-        chargerAchats();
-    } catch (SQLException e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Erreur lors de la mise à jour du statut : " + e.getMessage());
-    }
-}
+        int idAchat = (int) tableModel.getValueAt(selectedRow, 0);
+        int idLivre = (int) tableModel.getValueAt(selectedRow, 2); // ID Livre
+        int quantite = (int) tableModel.getValueAt(selectedRow, 3); // Quantité achetée
+        int statutValue = 0;
 
+        // Mapper les statuts texte aux valeurs numériques
+        switch (nouveauStatut.toLowerCase()) {
+            case "validé":
+                statutValue = 1;
+                break;
+            case "rejeté":
+                statutValue = 2;
+                break;
+            case "en attente":
+            default:
+                statutValue = 0;
+                break;
+        }
+
+        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
+            // Commencer une transaction
+            connection.setAutoCommit(false);
+
+            // Mettre à jour le statut de l'achat
+            String updateAchatQuery = "UPDATE achat SET statutValidation = ? WHERE idAchat = ?";
+            try (PreparedStatement updateAchatStmt = connection.prepareStatement(updateAchatQuery)) {
+                updateAchatStmt.setInt(1, statutValue);
+                updateAchatStmt.setInt(2, idAchat);
+                updateAchatStmt.executeUpdate();
+            }
+
+            // Si le statut est validé, décrémenter la quantité du livre
+            if (statutValue == 1) { // Si l'achat est validé
+                String updateLivreQuantiteQuery = "UPDATE livre SET quantiteDisponible = quantiteDisponible - ? WHERE idLivre = ?";
+                String updateLivreStatutQuery = "UPDATE livre SET statut = IF(quantiteDisponible = 0, 'non disponible', 'disponible') WHERE idLivre = ?";
+
+                try (PreparedStatement updateLivreQuantiteStmt = connection.prepareStatement(updateLivreQuantiteQuery); PreparedStatement updateLivreStatutStmt = connection.prepareStatement(updateLivreStatutQuery)) {
+
+                    // Décrémenter la quantité
+                    updateLivreQuantiteStmt.setInt(1, quantite);
+                    updateLivreQuantiteStmt.setInt(2, idLivre);
+                    int rowsUpdated = updateLivreQuantiteStmt.executeUpdate();
+
+                    if (rowsUpdated == 0) {
+                        throw new SQLException("Échec de la mise à jour de la quantité pour le livre ID " + idLivre);
+                    }
+
+                    // Mettre à jour le statut
+                    updateLivreStatutStmt.setInt(1, idLivre);
+                    updateLivreStatutStmt.executeUpdate();
+                }
+            }
+
+            // Valider la transaction
+            connection.commit();
+
+            JOptionPane.showMessageDialog(this, "Achat " + nouveauStatut + " avec succès !");
+            chargerAchats();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Erreur lors de la mise à jour du statut : " + e.getMessage());
+        }
+    }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new GestionAchatsAdminFrame(1).setVisible(true)); // Test avec idBibliotheque = 1

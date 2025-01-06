@@ -9,8 +9,11 @@ public class BookManagementFrame extends JFrame {
 
     private JTable bookTable;
     private DefaultTableModel tableModel;
+    private int currentUserLibraryId;
+    private int userLibraryId;
 
-    public BookManagementFrame() {
+    public BookManagementFrame(int userLibraryId) {
+       this.currentUserLibraryId = userLibraryId;
         setTitle("Gestion des Livres");
         setSize(800, 600);
         setLocationRelativeTo(null);
@@ -45,7 +48,7 @@ public class BookManagementFrame extends JFrame {
         btnAddBook.setForeground(Color.WHITE);
         btnAddBook.setFocusPainted(false);
         btnAddBook.addActionListener(e -> {
-            AddBookFrame addBookFrame = new AddBookFrame(this);  // Passe la référence du parent
+            AddBookFrame addBookFrame = new AddBookFrame(this,currentUserLibraryId);  // Passe la référence du parent
             addBookFrame.setVisible(true);
         });
 
@@ -73,13 +76,15 @@ public class BookManagementFrame extends JFrame {
 
     // Méthode pour charger les livres depuis la base de données
     public void chargerLivres() {
+        tableModel.setRowCount(0);
         try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-            String query = "SELECT * FROM livre";  // Requête pour récupérer les livres
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(query);
+            String query = "SELECT * FROM livre WHERE idBibliotheque = ?";   // Requête pour récupérer les livres
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setInt(1, currentUserLibraryId);
+            ResultSet resultSet = statement.executeQuery();
 
             // Réinitialiser les lignes existantes dans le tableau avant de les ajouter
-            tableModel.setRowCount(0);
+            
 
             // Parcourir les résultats et ajouter les livres dans le modèle de la table
             while (resultSet.next()) {
@@ -146,6 +151,6 @@ public class BookManagementFrame extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new BookManagementFrame().setVisible(true));
+        SwingUtilities.invokeLater(() -> new BookManagementFrame(1).setVisible(true));
     }
 }

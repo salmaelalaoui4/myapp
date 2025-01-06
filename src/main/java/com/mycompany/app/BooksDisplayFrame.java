@@ -10,6 +10,7 @@ public class BooksDisplayFrame extends JFrame {
     private JPanel booksPanel;
 
     private int currentUserLibraryId; // Assume you set this when the user logs in
+    private int userLibraryId;
 
     public BooksDisplayFrame(int userLibraryId) {
         // Set the current user's library ID
@@ -155,7 +156,7 @@ public class BooksDisplayFrame extends JFrame {
     }
 
     private void ouvrirFormulaireAjoutLivre() {
-        new BookManagementFrame().setVisible(true); // Formulaire d'ajout de livre
+        new BookManagementFrame(currentUserLibraryId).setVisible(true); // Formulaire d'ajout de livre
     }
 
     public static void main(String[] args) {

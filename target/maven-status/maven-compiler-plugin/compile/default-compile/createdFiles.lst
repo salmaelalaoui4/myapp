@@ -7,6 +7,7 @@ com\mycompany\app\EditBookFrame.class
 com\mycompany\app\AdminExchangeManagementFrame$3.class
 com\mycompany\app\LoanManagementFrame.class
 com\mycompany\app\ClientManagementFrame.class
+com\mycompany\app\AdminExchangeManagementFrame$4.class
 com\mycompany\app\AchatFormulaireFrame.class
 com\mycompany\app\LibrarianDashboardFrame.class
 com\mycompany\app\LoginFrame$1.class

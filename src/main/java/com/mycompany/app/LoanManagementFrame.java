@@ -85,15 +85,37 @@ public class LoanManagementFrame extends JFrame {
     }
 
     public void enregistrerEmprunt(int idLivre, int idClient, Date dateEmprunt, Date dateRetourPrevue) {
-        String statut = "en cours"; // Par défaut, le statut est "en cours"
-        Date currentDate = new Date(System.currentTimeMillis());
+    String statut = "en cours"; // Par défaut, le statut est "en cours"
+    Date currentDate = new Date(System.currentTimeMillis());
 
-        // Si la date de retour prévue est dépassée, changer le statut à "en retard"
-        if (dateRetourPrevue.before(currentDate)) {
-            statut = "en retard";
-        }
+    // Si la date de retour prévue est dépassée, changer le statut à "en retard"
+    if (dateRetourPrevue.before(currentDate)) {
+        statut = "en retard";
+    }
 
-        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
+    try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
+        connection.setAutoCommit(false); // Début de la transaction
+
+        try {
+            // Vérifier si le livre est disponible
+            String checkQuery = "SELECT quantiteDisponible, statut FROM livre WHERE idLivre = ?";
+            try (PreparedStatement checkStatement = connection.prepareStatement(checkQuery)) {
+                checkStatement.setInt(1, idLivre);
+                try (ResultSet resultSet = checkStatement.executeQuery()) {
+                    if (resultSet.next()) {
+                        int quantiteDisponible = resultSet.getInt("quantiteDisponible");
+                        String statutLivre = resultSet.getString("statut");
+
+                        if (quantiteDisponible <= 0 || "non disponible".equalsIgnoreCase(statutLivre)) {
+                            throw new SQLException("Le livre n'est pas disponible pour l'emprunt.");
+                        }
+                    } else {
+                        throw new SQLException("Livre introuvable.");
+                    }
+                }
+            }
+
+            // Enregistrer l'emprunt
             String query = "INSERT INTO emprunt (idLivre, idClient, idBibliotheque, dateEmprunt, dateRetourPrevue, statut) VALUES (?, ?, ?, ?, ?, ?)";
             try (PreparedStatement statement = connection.prepareStatement(query)) {
                 statement.setInt(1, idLivre);
@@ -101,21 +123,37 @@ public class LoanManagementFrame extends JFrame {
                 statement.setInt(3, bibliothequeId);
                 statement.setDate(4, dateEmprunt);
                 statement.setDate(5, dateRetourPrevue);
-                statement.setString(6, statut);  // Insérer le statut calculé
+                statement.setString(6, statut);
 
                 int rowsInserted = statement.executeUpdate();
-                if (rowsInserted > 0) {
-                    JOptionPane.showMessageDialog(null, "Emprunt enregistré avec succès !");
-                    chargerEmprunts();  // Recharger les emprunts après insertion
-                } else {
-                    JOptionPane.showMessageDialog(null, "Erreur lors de l'enregistrement de l'emprunt.");
+                if (rowsInserted <= 0) {
+                    throw new SQLException("Erreur lors de l'insertion de l'emprunt.");
                 }
             }
+
+            // Diminuer la quantité du livre
+            String updateQuery = "UPDATE livre SET quantiteDisponible = quantiteDisponible - 1, statut = IF(quantiteDisponible = 1, 'non disponible', 'disponible') WHERE idLivre = ?";
+            try (PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
+                updateStatement.setInt(1, idLivre);
+                int rowsUpdated = updateStatement.executeUpdate();
+                if (rowsUpdated <= 0) {
+                    throw new SQLException("Quantité insuffisante pour le livre sélectionné.");
+                }
+            }
+
+            connection.commit(); // Valider la transaction
+            JOptionPane.showMessageDialog(null, "Emprunt enregistré avec succès !");
+            chargerEmprunts(); // Recharger les emprunts après insertion
         } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Erreur lors de l'enregistrement de l'emprunt : " + e.getMessage());
+            connection.rollback(); // Annuler la transaction en cas d'erreur
+            throw e;
         }
+    } catch (SQLException e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(null, "Erreur lors de l'enregistrement de l'emprunt : " + e.getMessage());
     }
+}
+
 
     private void afficherFormulaireEmprunt() {
         // Ouvrir un formulaire pour enregistrer un emprunt (à implémenter)
@@ -124,41 +162,62 @@ public class LoanManagementFrame extends JFrame {
     }
 
     private void validerRetour() {
-        int selectedRow = loanTable.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Veuillez sélectionner un emprunt !");
-            return;
-        }
+    int selectedRow = loanTable.getSelectedRow();
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(this, "Veuillez sélectionner un emprunt !");
+        return;
+    }
 
-        int idEmprunt = (int) tableModel.getValueAt(selectedRow, 0);
-        String statutEmprunt = (String) tableModel.getValueAt(selectedRow, 6);
-        if ("Retourné".equals(statutEmprunt)) {
-            JOptionPane.showMessageDialog(this, "Cet emprunt a déjà été retourné.");
-            return;
-        }
+    int idEmprunt = (int) tableModel.getValueAt(selectedRow, 0);
+    int idLivre = (int) tableModel.getValueAt(selectedRow, 1); // Récupérer l'ID du livre
+    String statutEmprunt = (String) tableModel.getValueAt(selectedRow, 6);
+    if ("Retourné".equals(statutEmprunt)) {
+        JOptionPane.showMessageDialog(this, "Cet emprunt a déjà été retourné.");
+        return;
+    }
 
-        int confirm = JOptionPane.showConfirmDialog(this, "Voulez-vous vraiment valider ce retour ?", "Confirmation", JOptionPane.YES_NO_OPTION);
-        if (confirm != JOptionPane.YES_OPTION) {
-            return;
-        }
+    int confirm = JOptionPane.showConfirmDialog(this, "Voulez-vous vraiment valider ce retour ?", "Confirmation", JOptionPane.YES_NO_OPTION);
+    if (confirm != JOptionPane.YES_OPTION) {
+        return;
+    }
 
-        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
+    try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
+        connection.setAutoCommit(false); // Début de la transaction
+
+        try {
+            // Mettre à jour l'emprunt pour indiquer qu'il est retourné
             String query = "UPDATE emprunt SET dateRetourEffective = NOW(), statut = 'retourné' WHERE idEmprunt = ?";
             try (PreparedStatement statement = connection.prepareStatement(query)) {
                 statement.setInt(1, idEmprunt);
                 int rowsUpdated = statement.executeUpdate();
-                if (rowsUpdated > 0) {
-                    JOptionPane.showMessageDialog(this, "Retour validé avec succès !");
-                    chargerEmprunts();  // Recharger les emprunts après le retour
-                } else {
-                    JOptionPane.showMessageDialog(this, "Erreur lors de la validation du retour.");
+                if (rowsUpdated <= 0) {
+                    throw new SQLException("Erreur lors de la mise à jour de l'emprunt.");
                 }
             }
+
+            // Augmenter la quantité du livre
+            String updateQuery = "UPDATE livre SET quantiteDisponible = quantiteDisponible + 1 WHERE idLivre = ?";
+            try (PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
+                updateStatement.setInt(1, idLivre);
+                int rowsUpdated = updateStatement.executeUpdate();
+                if (rowsUpdated <= 0) {
+                    throw new SQLException("Erreur lors de la mise à jour de la quantité du livre.");
+                }
+            }
+
+            connection.commit(); // Valider la transaction
+            JOptionPane.showMessageDialog(this, "Retour validé avec succès !");
+            chargerEmprunts(); // Recharger les emprunts après le retour
         } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Erreur lors de la validation du retour : " + e.getMessage());
+            connection.rollback(); // Annuler la transaction en cas d'erreur
+            throw e;
         }
+    } catch (SQLException e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Erreur lors de la validation du retour : " + e.getMessage());
     }
+}
+
 
     public static void main(String[] args) {
         int bibliothequeId = 1;  // Exemple : bibliothèque avec ID 1
