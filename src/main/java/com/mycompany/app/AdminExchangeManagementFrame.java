@@ -1,25 +1,22 @@
 package com.mycompany.app;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.*;
-import java.time.LocalDate;
+import java.util.Vector;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 
 public class AdminExchangeManagementFrame extends JFrame {
 
-    private JTable exchangeTable;
-    private DefaultTableModel tableModel;
     private int bibliothequeId;
-    private JButton btnAccept, btnReject;
-    private int selectedExchangeId;
 
     public AdminExchangeManagementFrame(int bibliothequeId) {
         this.bibliothequeId = bibliothequeId;
         setTitle("Gestion des Échanges - Bibliothèque " + bibliothequeId);
-        setSize(900, 600);
+        setSize(1000, 700);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
@@ -30,180 +27,343 @@ public class AdminExchangeManagementFrame extends JFrame {
         add(mainPanel);
 
         // Titre
-        JLabel lblTitle = new JLabel("Gestion des Échanges - Bibliothèque " + bibliothequeId, SwingConstants.CENTER);
+        JLabel lblTitle = new JLabel("Gestion des Échanges", SwingConstants.CENTER);
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
         lblTitle.setForeground(new Color(241, 242, 246));
         lblTitle.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
         mainPanel.add(lblTitle, BorderLayout.NORTH);
 
-        // Table pour afficher les échanges
-        tableModel = new DefaultTableModel(new Object[][]{},
-                new String[]{"ID Échange", "Livre", "Source", "Destination", "Quantité", "Date Demande", "Date Réception", "Statut"});
-        exchangeTable = new JTable(tableModel);
-        JScrollPane scrollPane = new JScrollPane(exchangeTable);
-        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        // Onglets
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.addTab("Ajouter une Demande", createAddExchangePanel());
+        tabbedPane.addTab("Voir les Demandes", createViewRequestsPanel());
 
-        // Panneau des boutons
-        JPanel buttonPanel = new JPanel(new FlowLayout());
-        buttonPanel.setBackground(new Color(45, 52, 54));
-
-        // Bouton pour voir les échanges demandés par l'administrateur
-        JButton btnMyExchanges = new JButton("Mes Échanges");
-        btnMyExchanges.setBackground(new Color(0, 184, 148));
-        btnMyExchanges.setForeground(Color.WHITE);
-        btnMyExchanges.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        btnMyExchanges.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                loadExchanges("my");
-            }
-        });
-
-        // Bouton pour voir les échanges avec les autres bibliothèques
-        JButton btnOtherLibraryExchanges = new JButton("Échanges avec Autres Bibliothèques");
-        btnOtherLibraryExchanges.setBackground(new Color(0, 123, 255));
-        btnOtherLibraryExchanges.setForeground(Color.WHITE);
-        btnOtherLibraryExchanges.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        btnOtherLibraryExchanges.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                loadExchanges("other");
-            }
-        });
-
-        buttonPanel.add(btnMyExchanges);
-        buttonPanel.add(btnOtherLibraryExchanges);
-
-        // Boutons d'acceptation et de rejet
-        btnAccept = new JButton("Accepter");
-        btnAccept.setBackground(new Color(0, 184, 148));
-        btnAccept.setForeground(Color.WHITE);
-        btnAccept.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        btnAccept.setEnabled(false); // Désactivé au départ
-        btnAccept.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                updateExchangeStatus("accepté");
-            }
-        });
-
-        btnReject = new JButton("Rejeter");
-        btnReject.setBackground(new Color(255, 99, 71));
-        btnReject.setForeground(Color.WHITE);
-        btnReject.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        btnReject.setEnabled(false); // Désactivé au départ
-        btnReject.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                updateExchangeStatus("rejeté");
-            }
-        });
-
-        buttonPanel.add(btnAccept);
-        buttonPanel.add(btnReject);
-
-        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        // Charger les échanges par défaut (demandés par l'administrateur)
-        loadExchanges("my");
-
-        // Écouter les sélections de la table
-        exchangeTable.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                int selectedRow = exchangeTable.getSelectedRow();
-                if (selectedRow >= 0) {
-                    selectedExchangeId = (int) tableModel.getValueAt(selectedRow, 0);
-                    String sourceLibrary = (String) tableModel.getValueAt(selectedRow, 2);
-                    String destinationLibrary = (String) tableModel.getValueAt(selectedRow, 3);
-
-                    // Activer les boutons seulement si l'échange provient d'une autre bibliothèque
-                    if (!destinationLibrary.equals(getBibliothequeName(bibliothequeId))) {
-                        btnAccept.setEnabled(true);
-                        btnReject.setEnabled(true);
-                    } else {
-                        btnAccept.setEnabled(false);
-                        btnReject.setEnabled(false);
-                    }
-                }
-            }
-        });
+        mainPanel.add(tabbedPane, BorderLayout.CENTER);
     }
 
-    private void loadExchanges(String type) {
-        tableModel.setRowCount(0);
-        String query = "";
+    // Panneau pour ajouter une demande
+    private JPanel createAddExchangePanel() {
+        JPanel panel = new JPanel(new GridLayout(6, 2, 10, 10));
+        panel.setBackground(new Color(45, 52, 54));
 
-        if ("my".equals(type)) {
-            // Charger les échanges faits par l'administrateur
-            query = "SELECT e.idEchange, l.titre, e.nomBibliothequeSource, e.nomBibliothequeDestination, e.quantite, e.dateDemande, e.dateReception, e.statut " +
-                    "FROM echange e JOIN livre l ON e.idLivre = l.idLivre " +
-                    "WHERE e.nomBibliothequeSource = ?";
-        } else if ("other".equals(type)) {
-            // Charger les échanges faits avec d'autres bibliothèques
-            query = "SELECT e.idEchange, l.titre, e.nomBibliothequeSource, e.nomBibliothequeDestination, e.quantite, e.dateDemande, e.dateReception, e.statut " +
-                    "FROM echange e JOIN livre l ON e.idLivre = l.idLivre " +
-                    "WHERE e.nomBibliothequeDestination = ?";
-        }
+        JLabel lblBook = new JLabel("Livre à demander:");
+        lblBook.setForeground(Color.WHITE);
+        JComboBox<String> cbBooks = new JComboBox<>();
 
-        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "");
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+        JLabel lblDestination = new JLabel("Bibliothèque destination:");
+        lblDestination.setForeground(Color.WHITE);
+        JComboBox<String> cbLibraries = new JComboBox<>();
 
-            if ("my".equals(type)) {
-                stmt.setString(1, getBibliothequeName(bibliothequeId));
-            } else if ("other".equals(type)) {
-                stmt.setString(1, getBibliothequeName(bibliothequeId));
-            }
+        JLabel lblQuantity = new JLabel("Quantité demandée:");
+        lblQuantity.setForeground(Color.WHITE);
+        JTextField txtQuantity = new JTextField();
 
+        JButton btnSubmit = new JButton("Ajouter la Demande");
+        btnSubmit.setBackground(new Color(0, 184, 148));
+        btnSubmit.setForeground(Color.WHITE);
+
+        // Remplir les livres disponibles dans la bibliothèque actuelle
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/biblio", "root", "");
+             PreparedStatement stmt = conn.prepareStatement("SELECT titre FROM livre WHERE idBibliotheque = ?")) {
+            stmt.setInt(1, bibliothequeId);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                Object[] row = new Object[8];
-                row[0] = rs.getInt("idEchange");
-                row[1] = rs.getString("titre");
-                row[2] = rs.getString("nomBibliothequeSource");
-                row[3] = rs.getString("nomBibliothequeDestination");
-                row[4] = rs.getInt("quantite");
-                row[5] = rs.getDate("dateDemande");
-                row[6] = rs.getDate("dateReception");
-                row[7] = rs.getString("statut");
-
-                tableModel.addRow(row);
+                cbBooks.addItem(rs.getString("titre"));
             }
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Erreur de chargement des échanges : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+
+        // Remplir la liste des bibliothèques destination (ne pas inclure la bibliothèque source)
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/biblio", "root", "");
+             PreparedStatement stmt = conn.prepareStatement("SELECT nom FROM bibliotheque WHERE idBibliotheque != ?")) {
+            stmt.setInt(1, bibliothequeId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                cbLibraries.addItem(rs.getString("nom"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        btnSubmit.addActionListener(e -> {
+            String book = (String) cbBooks.getSelectedItem();
+            String destination = (String) cbLibraries.getSelectedItem();
+            int quantity;
+            try {
+                quantity = Integer.parseInt(txtQuantity.getText());
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Veuillez entrer une quantité valide.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (destination == null || destination.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Veuillez sélectionner une bibliothèque destination.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Récupérer le nom de la bibliothèque source
+            String sourceLibraryName = null;
+            try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/biblio", "root", "");
+                 PreparedStatement stmt = conn.prepareStatement("SELECT nom FROM bibliotheque WHERE idBibliotheque = ?")) {
+
+                stmt.setInt(1, bibliothequeId);
+                ResultSet rs = stmt.executeQuery();
+
+                if (rs.next()) {
+                    sourceLibraryName = rs.getString("nom");
+                }
+
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Erreur lors de la récupération du nom de la bibliothèque source.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (sourceLibraryName == null) {
+                JOptionPane.showMessageDialog(this, "Erreur : Bibliothèque source introuvable.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Ajouter la demande dans la base de données
+            try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/biblio", "root", "");
+                 PreparedStatement stmt = conn.prepareStatement(
+                         "INSERT INTO echange (idLivre, nomBibliothequeSource, nomBibliothequeDestination, dateDemande, statut, quantite) " +
+                                 "VALUES ((SELECT idLivre FROM livre WHERE titre = ? AND idBibliotheque = ?), ?, ?, NOW(), 'en attente', ?)");) {
+
+                stmt.setString(1, book); // Titre du livre
+                stmt.setInt(2, bibliothequeId); // ID de la bibliothèque source
+                stmt.setString(3, sourceLibraryName); // Nom de la bibliothèque source
+                stmt.setString(4, destination); // Nom de la bibliothèque destination
+                stmt.setInt(5, quantity); // Quantité demandée
+
+                stmt.executeUpdate();
+                JOptionPane.showMessageDialog(this, "Demande ajoutée avec succès.", "Succès", JOptionPane.INFORMATION_MESSAGE);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Erreur lors de l'ajout de la demande.", "Erreur", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        panel.add(lblBook);
+        panel.add(cbBooks);
+        panel.add(lblDestination);
+        panel.add(cbLibraries);
+        panel.add(lblQuantity);
+        panel.add(txtQuantity);
+        panel.add(new JLabel());
+        panel.add(btnSubmit);
+
+        return panel;
     }
 
-    private void updateExchangeStatus(String status) {
-        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "");
-             PreparedStatement stmt = conn.prepareStatement("UPDATE echange SET statut = ? WHERE idEchange = ?")) {
-            stmt.setString(1, status);
-            stmt.setInt(2, selectedExchangeId);
-            stmt.executeUpdate();
-            JOptionPane.showMessageDialog(this, "Échange " + status + " avec succès.");
-            loadExchanges("other"); // Recharger la liste des échanges après mise à jour
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Erreur lors de la mise à jour de l'échange : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
-        }
+    // Panneau pour voir les demandes
+    private JPanel createViewRequestsPanel() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBackground(new Color(45, 52, 54));
+
+        JTable table = new JTable();
+        JScrollPane scrollPane = new JScrollPane(table);
+
+        JButton btnAccept = new JButton("Accepter");
+        JButton btnReject = new JButton("Rejeter");
+
+        btnAccept.addActionListener(e -> handleRequestAction(table, true));
+        btnReject.addActionListener(e -> handleRequestAction(table, false));
+
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(btnAccept);
+        buttonPanel.add(btnReject);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Charger les demandes des autres bibliothèques
+        loadRequests(table);
+
+        return panel;
     }
 
-    private String getBibliothequeName(int idBibliotheque) {
-        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "");
+    private void handleRequestAction(JTable table, boolean accept) {
+    int selectedRow = table.getSelectedRow();
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(this, "Veuillez sélectionner une demande.", "Erreur", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+
+    // Récupérer les données de la ligne sélectionnée
+    int exchangeId = (int) table.getValueAt(selectedRow, 0);
+    int bookId = (int) table.getValueAt(selectedRow, 1); // Récupérer l'ID du livre
+    int quantity = (int) table.getValueAt(selectedRow, 5); // Quantité demandée
+
+    // Vérifier si le livre existe dans la bibliothèque du demandeur
+    String bookTitle = null;
+    try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/biblio", "root", "");
+         PreparedStatement stmt = conn.prepareStatement("SELECT titre FROM livre WHERE idLivre = ? AND idBibliotheque = ?")) {
+        
+        stmt.setInt(1, bookId);
+        stmt.setInt(2, bibliothequeId);  // Assurez-vous de passer l'ID de la bibliothèque du demandeur
+        ResultSet rs = stmt.executeQuery();
+
+        if (rs.next()) {
+            bookTitle = rs.getString("titre"); // Récupérer le titre du livre de la bibliothèque du demandeur
+        } else {
+            JOptionPane.showMessageDialog(this, "Le livre demandé n'existe pas dans la bibliothèque du demandeur.", "Erreur", JOptionPane.ERROR_MESSAGE);
+            return;  // Sortir si le livre n'existe pas dans la bibliothèque source
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Erreur lors de la vérification du livre dans la bibliothèque du demandeur.", "Erreur", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+
+    // Vérifier si le livre existe dans votre bibliothèque
+    try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/biblio", "root", "");
+         PreparedStatement stmt = conn.prepareStatement("SELECT quantiteDisponible FROM livre WHERE titre = ? AND idBibliotheque = ?")) {
+
+        stmt.setString(1, bookTitle);  // Utiliser le titre récupéré précédemment
+        stmt.setInt(2, bibliothequeId);  // Vérifier dans votre propre bibliothèque
+        ResultSet rs = stmt.executeQuery();
+
+        if (rs.next()) {
+            int availableQuantity = rs.getInt("quantiteDisponible");
+
+            // Si la quantité est 0, le livre n'est pas disponible
+            if (availableQuantity == 0) {
+                JOptionPane.showMessageDialog(this, "Le livre n'est pas disponible dans votre bibliothèque.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                return;
+            } 
+
+            // Si la quantité disponible est inférieure à la quantité demandée
+            else if (availableQuantity < quantity) {
+                JOptionPane.showMessageDialog(this, "La quantité disponible est insuffisante. Quantité disponible: " + availableQuantity, "Erreur", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Le livre demandé n'existe pas dans votre bibliothèque.", "Erreur", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Erreur lors de la vérification de la disponibilité du livre dans votre bibliothèque.", "Erreur", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+
+    // Traiter l'action (accepter ou rejeter)
+    try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/biblio", "root", "");
+         PreparedStatement stmt = conn.prepareStatement("UPDATE echange SET statut = ? WHERE idEchange = ?")) {
+
+        if (accept) {
+            stmt.setString(1, "accepté");
+        } else {
+            stmt.setString(1, "rejeté");
+        }
+        stmt.setInt(2, exchangeId);
+        stmt.executeUpdate();
+
+        if (accept) {
+            // Si la demande est acceptée, mettre à jour la quantité disponible dans la bibliothèque
+            if (updateQuantities(bookId, quantity)) {
+                JOptionPane.showMessageDialog(this, "Demande acceptée avec succès.", "Succès", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Quantité insuffisante pour accepter la demande.", "Erreur", JOptionPane.ERROR_MESSAGE);
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Demande rejetée avec succès.", "Succès", JOptionPane.INFORMATION_MESSAGE);
+        }
+
+        loadRequests(table); // Recharge les demandes après modification
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Erreur lors du traitement de la demande.", "Erreur", JOptionPane.ERROR_MESSAGE);
+    }
+}
+
+
+
+private boolean updateQuantities(int bookId, int quantity) {
+    try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/biblio", "root", "")) {
+        conn.setAutoCommit(false);
+
+        // Mettre à jour la quantité dans la bibliothèque source
+        PreparedStatement updateSource = conn.prepareStatement("UPDATE livre SET quantiteDisponible = quantiteDisponible - ? WHERE idLivre = ? AND idBibliotheque = ?");
+        updateSource.setInt(1, quantity);
+        updateSource.setInt(2, bookId);
+        updateSource.setInt(3, bibliothequeId);
+        int rowsUpdated = updateSource.executeUpdate();
+
+        if (rowsUpdated == 0) {
+            conn.rollback();
+            return false;
+        }
+
+        // Mettre à jour la quantité dans la bibliothèque destination
+        PreparedStatement updateDestination = conn.prepareStatement("UPDATE livre SET quantiteDisponible = quantiteDisponible + ? WHERE idLivre = ? AND idBibliotheque != ?");
+        updateDestination.setInt(1, quantity);
+        updateDestination.setInt(2, bookId);
+        updateDestination.setInt(3, bibliothequeId);
+        updateDestination.executeUpdate();
+
+        conn.commit();
+        return true;
+    } catch (SQLException e) {
+        e.printStackTrace();
+        return false;
+    }
+}
+
+private void loadRequests(JTable table) {
+    try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/biblio", "root", "");
+         PreparedStatement stmt = conn.prepareStatement("SELECT idEchange, idLivre, nomBibliothequeSource, nomBibliothequeDestination, dateDemande, quantite, statut FROM echange WHERE nomBibliothequeDestination = ? AND statut = 'en attente'")) {
+
+        stmt.setString(1, getBibliothequeName()); // Utiliser la méthode pour obtenir le nom
+        ResultSet rs = stmt.executeQuery();
+        table.setModel(buildTableModel(rs));
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+}
+
+
+    private String getBibliothequeName() {
+        String libraryName = null;
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/biblio", "root", "");
              PreparedStatement stmt = conn.prepareStatement("SELECT nom FROM bibliotheque WHERE idBibliotheque = ?")) {
-            stmt.setInt(1, idBibliotheque);
+
+            stmt.setInt(1, bibliothequeId);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                return rs.getString("nom");
+                libraryName = rs.getString("nom");
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        return "Inconnu";
+        return libraryName;
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            AdminExchangeManagementFrame frame = new AdminExchangeManagementFrame(1);
-            frame.setVisible(true);
-        });
+    private static TableModel buildTableModel(ResultSet rs) throws SQLException {
+        ResultSetMetaData metaData = rs.getMetaData();
+        int columnCount = metaData.getColumnCount();
+
+        // Noms des colonnes
+        Vector<String> columnNames = new Vector<>();
+        for (int column = 1; column <= columnCount; column++) {
+            columnNames.add(metaData.getColumnName(column));
+        }
+
+        // Données
+        Vector<Vector<Object>> data = new Vector<>();
+        while (rs.next()) {
+            Vector<Object> row = new Vector<>();
+            for (int column = 1; column <= columnCount; column++) {
+                row.add(rs.getObject(column));
+            }
+            data.add(row);
+        }
+
+        return new DefaultTableModel(data, columnNames);
     }
 }
