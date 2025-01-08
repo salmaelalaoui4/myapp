@@ -184,140 +184,128 @@ public class AdminExchangeManagementFrame extends JFrame {
         return panel;
     }
 
-    private void handleRequestAction(JTable table, boolean accept) {
+private void handleRequestAction(JTable table, boolean accept) {
     int selectedRow = table.getSelectedRow();
     if (selectedRow == -1) {
         JOptionPane.showMessageDialog(this, "Veuillez sélectionner une demande.", "Erreur", JOptionPane.ERROR_MESSAGE);
         return;
     }
 
-    // Récupérer les données de la ligne sélectionnée
+    // Récupérer les données de l'échange
     int exchangeId = (int) table.getValueAt(selectedRow, 0);
-    int bookId = (int) table.getValueAt(selectedRow, 1); // Récupérer l'ID du livre
-    int quantity = (int) table.getValueAt(selectedRow, 5); // Quantité demandée
+    int bookId = (int) table.getValueAt(selectedRow, 1); // ID du livre dans la bibliothèque source
+    int quantity = (int) table.getValueAt(selectedRow, 5);
 
-    // Vérifier si le livre existe dans la bibliothèque du demandeur
-    String bookTitle = null;
-    try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/biblio", "root", "");
-         PreparedStatement stmt = conn.prepareStatement("SELECT titre FROM livre WHERE idLivre = ? AND idBibliotheque = ?")) {
-        
-        stmt.setInt(1, bookId);
-        stmt.setInt(2, bibliothequeId);  // Assurez-vous de passer l'ID de la bibliothèque du demandeur
-        ResultSet rs = stmt.executeQuery();
+    try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/biblio", "root", "")) {
+        conn.setAutoCommit(false);
 
-        if (rs.next()) {
-            bookTitle = rs.getString("titre"); // Récupérer le titre du livre de la bibliothèque du demandeur
-        } else {
-            JOptionPane.showMessageDialog(this, "Le livre demandé n'existe pas dans la bibliothèque du demandeur.", "Erreur", JOptionPane.ERROR_MESSAGE);
-            return;  // Sortir si le livre n'existe pas dans la bibliothèque source
-        }
-
-    } catch (SQLException e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Erreur lors de la vérification du livre dans la bibliothèque du demandeur.", "Erreur", JOptionPane.ERROR_MESSAGE);
-        return;
-    }
-
-    // Vérifier si le livre existe dans votre bibliothèque
-    try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/biblio", "root", "");
-         PreparedStatement stmt = conn.prepareStatement("SELECT quantiteDisponible FROM livre WHERE titre = ? AND idBibliotheque = ?")) {
-
-        stmt.setString(1, bookTitle);  // Utiliser le titre récupéré précédemment
-        stmt.setInt(2, bibliothequeId);  // Vérifier dans votre propre bibliothèque
-        ResultSet rs = stmt.executeQuery();
-
-        if (rs.next()) {
-            int availableQuantity = rs.getInt("quantiteDisponible");
-
-            // Si la quantité est 0, le livre n'est pas disponible
-            if (availableQuantity == 0) {
-                JOptionPane.showMessageDialog(this, "Le livre n'est pas disponible dans votre bibliothèque.", "Erreur", JOptionPane.ERROR_MESSAGE);
-                return;
-            } 
-
-            // Si la quantité disponible est inférieure à la quantité demandée
-            else if (availableQuantity < quantity) {
-                JOptionPane.showMessageDialog(this, "La quantité disponible est insuffisante. Quantité disponible: " + availableQuantity, "Erreur", JOptionPane.ERROR_MESSAGE);
-                return;
+        if (accept) {
+            // Étape 1 : Récupérer le titre du livre à partir de l'ID dans la bibliothèque source
+            String bookTitle = null;
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT titre FROM livre WHERE idLivre = ?")) {
+                stmt.setInt(1, bookId);
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    bookTitle = rs.getString("titre");
+                } else {
+                    JOptionPane.showMessageDialog(this, "Le livre n'existe pas dans la bibliothèque source.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                    return; // Arrêter si le titre ne peut pas être récupéré
+                }
             }
-        } else {
-            JOptionPane.showMessageDialog(this, "Le livre demandé n'existe pas dans votre bibliothèque.", "Erreur", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
 
-    } catch (SQLException e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Erreur lors de la vérification de la disponibilité du livre dans votre bibliothèque.", "Erreur", JOptionPane.ERROR_MESSAGE);
-        return;
-    }
+            // Étape 2 : Vérifier si le livre existe dans la bibliothèque destination
+            int availableQuantity = -1;
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT quantiteDisponible FROM livre WHERE titre = ? AND idBibliotheque = ?")) {
+                stmt.setString(1, bookTitle);
+                stmt.setInt(2, bibliothequeId); // Bibliothèque destination
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    availableQuantity = rs.getInt("quantiteDisponible");
+                } else {
+                    JOptionPane.showMessageDialog(this, "Le livre n'existe pas dans la bibliothèque destination.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                    return; // Arrêter si le livre n'existe pas
+                }
+            }
 
-    // Traiter l'action (accepter ou rejeter)
-    try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/biblio", "root", "");
-         PreparedStatement stmt = conn.prepareStatement("UPDATE echange SET statut = ? WHERE idEchange = ?")) {
-
-        if (accept) {
-            stmt.setString(1, "accepté");
-        } else {
-            stmt.setString(1, "rejeté");
-        }
-        stmt.setInt(2, exchangeId);
-        stmt.executeUpdate();
-
-        if (accept) {
-            // Si la demande est acceptée, mettre à jour la quantité disponible dans la bibliothèque
-            if (updateQuantities(bookId, quantity)) {
-                JOptionPane.showMessageDialog(this, "Demande acceptée avec succès.", "Succès", JOptionPane.INFORMATION_MESSAGE);
-            } else {
+            // Étape 3 : Vérifier si la quantité est suffisante
+            if (availableQuantity < quantity) {
                 JOptionPane.showMessageDialog(this, "Quantité insuffisante pour accepter la demande.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                return; // Arrêter si la quantité est insuffisante
             }
+
+            // Étape 4 : Mettre à jour les quantités et marquer l'échange comme accepté
+            updateQuantities(bookTitle, quantity, conn);
+
+            // Marquer l'échange comme accepté
+            try (PreparedStatement stmt = conn.prepareStatement("UPDATE echange SET statut = 'accepté', dateReception = ? WHERE idEchange = ?")) {
+                stmt.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+                stmt.setInt(2, exchangeId);
+                stmt.executeUpdate();
+            }
+
+            // Mettre à jour le statut du livre
+            updateBookStatus(conn, bookTitle);
+
+            JOptionPane.showMessageDialog(this, "Demande acceptée avec succès.", "Succès", JOptionPane.INFORMATION_MESSAGE);
         } else {
+            // Rejeter l'échange sans condition
+            try (PreparedStatement stmt = conn.prepareStatement("UPDATE echange SET statut = 'rejeté' WHERE idEchange = ?")) {
+                stmt.setInt(1, exchangeId);
+                stmt.executeUpdate();
+            }
             JOptionPane.showMessageDialog(this, "Demande rejetée avec succès.", "Succès", JOptionPane.INFORMATION_MESSAGE);
         }
 
-        loadRequests(table); // Recharge les demandes après modification
-
+        conn.commit(); // Valider les changements
+        loadRequests(table); // Recharger les demandes
     } catch (SQLException e) {
         e.printStackTrace();
         JOptionPane.showMessageDialog(this, "Erreur lors du traitement de la demande.", "Erreur", JOptionPane.ERROR_MESSAGE);
     }
 }
 
-
-
-private boolean updateQuantities(int bookId, int quantity) {
-    try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/biblio", "root", "")) {
-        conn.setAutoCommit(false);
-
-        // Mettre à jour la quantité dans la bibliothèque source
-        PreparedStatement updateSource = conn.prepareStatement("UPDATE livre SET quantiteDisponible = quantiteDisponible - ? WHERE idLivre = ? AND idBibliotheque = ?");
-        updateSource.setInt(1, quantity);
-        updateSource.setInt(2, bookId);
-        updateSource.setInt(3, bibliothequeId);
-        int rowsUpdated = updateSource.executeUpdate();
-
-        if (rowsUpdated == 0) {
-            conn.rollback();
-            return false;
+// Méthode pour mettre à jour les quantités
+private void updateQuantities(String bookTitle, int quantity, Connection conn) throws SQLException {
+    try {
+        // Réduire la quantité dans la bibliothèque source
+        try (PreparedStatement stmt = conn.prepareStatement("UPDATE livre SET quantiteDisponible = quantiteDisponible - ? WHERE titre = ? AND idBibliotheque = ?")) {
+            stmt.setInt(1, quantity);
+            stmt.setString(2, bookTitle);
+            stmt.setInt(3, bibliothequeId); // Bibliothèque source
+            stmt.executeUpdate();
         }
 
-        // Mettre à jour la quantité dans la bibliothèque destination
-        PreparedStatement updateDestination = conn.prepareStatement("UPDATE livre SET quantiteDisponible = quantiteDisponible + ? WHERE idLivre = ? AND idBibliotheque != ?");
-        updateDestination.setInt(1, quantity);
-        updateDestination.setInt(2, bookId);
-        updateDestination.setInt(3, bibliothequeId);
-        updateDestination.executeUpdate();
-
-        conn.commit();
-        return true;
+        // Augmenter la quantité dans la bibliothèque destination
+        try (PreparedStatement stmt = conn.prepareStatement("UPDATE livre SET quantiteDisponible = quantiteDisponible + ? WHERE titre = ? AND idBibliotheque != ?")) {
+            stmt.setInt(1, quantity);
+            stmt.setString(2, bookTitle);
+            stmt.setInt(3, bibliothequeId); // Exclure la bibliothèque source
+            stmt.executeUpdate();
+        }
     } catch (SQLException e) {
-        e.printStackTrace();
-        return false;
+        conn.rollback();
+        throw e;
     }
 }
 
-private void loadRequests(JTable table) {
+// Méthode pour mettre à jour le statut du livre
+private void updateBookStatus(Connection conn, String bookTitle) throws SQLException {
+    String query = "UPDATE livre SET statut = CASE WHEN quantiteDisponible > 0 THEN 'disponible' ELSE 'non disponible' END WHERE titre = ?";
+    try (PreparedStatement stmt = conn.prepareStatement(query)) {
+        stmt.setString(1, bookTitle);
+        stmt.executeUpdate();
+    }
+}
+
+
+
+
+    private void loadRequests(JTable table) {
     try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/biblio", "root", "");
-         PreparedStatement stmt = conn.prepareStatement("SELECT idEchange, idLivre, nomBibliothequeSource, nomBibliothequeDestination, dateDemande, quantite, statut FROM echange WHERE nomBibliothequeDestination = ? AND statut = 'en attente'")) {
+         PreparedStatement stmt = conn.prepareStatement(
+             "SELECT idEchange, idLivre, nomBibliothequeSource, nomBibliothequeDestination, dateDemande, quantite, statut " +
+             "FROM echange " +
+             "WHERE nomBibliothequeDestination = ? AND statut = 'en attente'")) { // Filtrer par statut 'en attente'
 
         stmt.setString(1, getBibliothequeName()); // Utiliser la méthode pour obtenir le nom
         ResultSet rs = stmt.executeQuery();

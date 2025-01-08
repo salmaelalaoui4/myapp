@@ -56,33 +56,35 @@ public class LoanManagementFrame extends JFrame {
     }
 
     private void chargerEmprunts() {
-        System.out.println("Chargement des emprunts pour la bibliothèque ID: " + bibliothequeId);
-        tableModel.setRowCount(0); // Réinitialiser le tableau avant d'ajouter les nouvelles lignes
+    System.out.println("Chargement des emprunts pour la bibliothèque ID: " + bibliothequeId);
+    tableModel.setRowCount(0); // Réinitialiser le tableau avant d'ajouter les nouvelles lignes
 
-        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-            String query = "SELECT * FROM emprunt WHERE idBibliotheque = ?";
-            try (PreparedStatement statement = connection.prepareStatement(query)) {
-                statement.setInt(1, bibliothequeId);  // Passer l'ID de la bibliothèque
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    while (resultSet.next()) {
-                        String statutEmprunt = resultSet.getString("statut");
-                        tableModel.addRow(new Object[] {
-                            resultSet.getInt("idEmprunt"),
-                            resultSet.getInt("idLivre"),
-                            resultSet.getInt("idClient"),
-                            resultSet.getDate("dateEmprunt"),
-                            resultSet.getDate("dateRetourPrevue"),
-                            resultSet.getDate("dateRetourEffective"),
-                            statutEmprunt  // Afficher le statut
-                        });
-                    }
+    try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
+        // Modifier la requête pour exclure les emprunts qui ont déjà été retournés
+        String query = "SELECT * FROM emprunt WHERE idBibliotheque = ? AND dateRetourEffective IS NULL";
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, bibliothequeId);  // Passer l'ID de la bibliothèque
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    String statutEmprunt = resultSet.getString("statut");
+                    tableModel.addRow(new Object[] {
+                        resultSet.getInt("idEmprunt"),
+                        resultSet.getInt("idLivre"),
+                        resultSet.getInt("idClient"),
+                        resultSet.getDate("dateEmprunt"),
+                        resultSet.getDate("dateRetourPrevue"),
+                        resultSet.getDate("dateRetourEffective"),
+                        statutEmprunt  // Afficher le statut
+                    });
                 }
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Erreur lors du chargement des emprunts : " + e.getMessage());
         }
+    } catch (SQLException e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Erreur lors du chargement des emprunts : " + e.getMessage());
     }
+}
+
 
     public void enregistrerEmprunt(int idLivre, int idClient, Date dateEmprunt, Date dateRetourPrevue) {
     String statut = "en cours"; // Par défaut, le statut est "en cours"

@@ -36,15 +36,18 @@ public class ClientManagementFrame extends JFrame {
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
         // Boutons
-        JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 10, 10));
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 3, 10, 10));
         JButton btnAdd = new JButton("Ajouter");
         JButton btnUpdate = new JButton("Mettre à jour");
+        JButton btnDelete = new JButton("Supprimer");
 
         btnAdd.addActionListener(e -> ajouterClient());
         btnUpdate.addActionListener(e -> mettreAJourClient());
+        btnDelete.addActionListener(e -> supprimerClient());
 
         buttonPanel.add(btnAdd);
         buttonPanel.add(btnUpdate);
+        buttonPanel.add(btnDelete);
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         // Charger les clients au démarrage
@@ -144,6 +147,40 @@ public class ClientManagementFrame extends JFrame {
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Erreur lors de la mise à jour du client : " + e.getMessage());
+        }
+    }
+
+    private void supprimerClient() {
+        int selectedRow = clientTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Veuillez sélectionner un client !");
+            return;
+        }
+
+        int idClient = (int) tableModel.getValueAt(selectedRow, 0);
+
+        // Demander confirmation
+        int confirm = JOptionPane.showConfirmDialog(this, "Êtes-vous sûr de vouloir supprimer ce client ?", "Confirmation", JOptionPane.YES_NO_OPTION);
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
+            String query = "UPDATE client SET statut = 0 WHERE idClient = ? AND idBibliotheque = ?";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setInt(1, idClient);
+            statement.setInt(2, bibliothequeId);
+            int rowsUpdated = statement.executeUpdate();
+
+            if (rowsUpdated > 0) {
+                JOptionPane.showMessageDialog(this, "Client supprimé avec succès !");
+                chargerClients(); // Recharger la liste après la suppression
+            } else {
+                JOptionPane.showMessageDialog(this, "Erreur lors de la suppression du client.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Erreur lors de la suppression du client : " + e.getMessage());
         }
     }
 

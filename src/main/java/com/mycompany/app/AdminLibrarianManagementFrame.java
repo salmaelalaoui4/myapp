@@ -37,9 +37,7 @@ public class AdminLibrarianManagementFrame extends JFrame {
         // Boutons
         JPanel buttonPanel = new JPanel(new GridLayout(1, 4, 10, 10));
         JButton btnAdd = new JButton("Ajouter");
-        JButton btnDisable = new JButton("Désactiver");
-        JButton btnDelete = new JButton("Supprimer");
-        JButton btnBackToDashboard = new JButton("Retour au Dashboard");  // Nouveau bouton pour revenir au Dashboard
+        JButton btnDelete = new JButton("Supprimer");// Nouveau bouton pour revenir au Dashboard
 
     btnAdd.addActionListener(e -> {
     // Ouvrir le formulaire pour ajouter un bibliothécaire et passer la référence à la fenêtre admin
@@ -48,22 +46,13 @@ public class AdminLibrarianManagementFrame extends JFrame {
 });
 
 
-        btnDisable.addActionListener(e -> desactiverBibliothecaire());
         btnDelete.addActionListener(e -> supprimerBibliothecaire());
 
          // Action pour le bouton Retour au Dashboard
-        btnBackToDashboard.addActionListener(e -> {
-            // Fermer la fenêtre actuelle
-            this.dispose();
-            // Ouvrir le Dashboard
-            AdminDashboardFrameBiblio dashboard = new AdminDashboardFrameBiblio(bibliothequeId);  // Remplace AdminDashboardFrameBiblio par le nom de ta fenêtre de dashboard
-            dashboard.setVisible(true);
-        });
+        
         
         buttonPanel.add(btnAdd);
-        buttonPanel.add(btnDisable);
         buttonPanel.add(btnDelete);
-        buttonPanel.add(btnBackToDashboard);  // Ajouter le bouton au panel
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         chargerBibliothecaires();
@@ -96,26 +85,7 @@ public class AdminLibrarianManagementFrame extends JFrame {
 
 
 
-    private void desactiverBibliothecaire() {
-        int selectedRow = librarianTable.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Veuillez sélectionner un bibliothécaire !");
-            return;
-        }
-
-        int idUtilisateur = (int) tableModel.getValueAt(selectedRow, 0);
-        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-            String query = "UPDATE utilisateur SET statut = 0 WHERE idUtilisateur = ?";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setInt(1, idUtilisateur);
-            statement.executeUpdate();
-            JOptionPane.showMessageDialog(this, "Bibliothécaire désactivé avec succès !");
-            chargerBibliothecaires();
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Erreur lors de la désactivation du bibliothécaire : " + e.getMessage());
-        }
-    }
+    
 
     private void supprimerBibliothecaire() {
         int selectedRow = librarianTable.getSelectedRow();
