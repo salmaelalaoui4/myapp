@@ -13,7 +13,7 @@ public class LibrarianDashboardFrame extends JFrame {
 
     private int bibliothequeId;
 
-    // Méthode pour obtenir le nom de la bibliothèque depuis la base de données
+   
     private String getBibliothequeName(int bibliothequeId) {
         String bibliothequeName = "Bibliothèque Inconnue";
         try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/biblio", "root", "");
@@ -32,7 +32,6 @@ public class LibrarianDashboardFrame extends JFrame {
     public LibrarianDashboardFrame(int bibliothequeId) {
         this.bibliothequeId = bibliothequeId;
 
-        // Récupérer le nom de la bibliothèque
         String bibliothequeName = getBibliothequeName(bibliothequeId);
 
         setTitle("Tableau de Bord - Bibliothécaire");
@@ -45,14 +44,13 @@ public class LibrarianDashboardFrame extends JFrame {
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         add(mainPanel);
 
-        // Titre avec le nom de la bibliothèque
         JLabel lblTitle = new JLabel("Tableau de Bord - " + bibliothequeName, SwingConstants.CENTER);
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
         lblTitle.setForeground(new Color(241, 242, 246));
         lblTitle.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
         mainPanel.add(lblTitle, BorderLayout.NORTH);
 
-        JPanel buttonPanel = new JPanel(new GridLayout(5, 1, 20, 20)); // Changer le nombre de lignes pour 5 boutons
+        JPanel buttonPanel = new JPanel(new GridLayout(5, 1, 20, 20)); 
         buttonPanel.setBackground(new Color(45, 52, 54));
 
         // Boutons pour les fonctionnalités
@@ -63,13 +61,12 @@ public class LibrarianDashboardFrame extends JFrame {
 
         buttonPanel.add(btnManageClients);
         buttonPanel.add(btnManageBooks);
-        buttonPanel.add(btnConsultBorrowings);  // Nouveau bouton pour consulter les emprunts
-        buttonPanel.add(btnConsultPurchases);  // Nouveau bouton pour consulter les achats
+        buttonPanel.add(btnConsultBorrowings); 
+        buttonPanel.add(btnConsultPurchases); 
 
         mainPanel.add(buttonPanel, BorderLayout.CENTER);
     }
 
-    // Méthode générique pour créer des boutons
     private JButton createButton(String text, ActionListener actionListener) {
         JButton button = new JButton(text);
         button.setFont(new Font("Segoe UI", Font.BOLD, 16));
@@ -80,21 +77,20 @@ public class LibrarianDashboardFrame extends JFrame {
         return button;
     }
 
-    // Méthode générique pour ouvrir les fenêtres de gestion
     private void openManagementFrame(String type) {
         JFrame managementFrame;
         switch (type) {
             case "clients":
-                managementFrame = new ClientManagementFrame(bibliothequeId); // Passer l'ID de la bibliothèque
+                managementFrame = new ClientManagementFrame(bibliothequeId);
                 break;
             case "books":
-                managementFrame = new BooksDisplayForLibrarianFrame(bibliothequeId); // Passer l'ID de la bibliothèque
+                managementFrame = new BooksDisplayForLibrarianFrame(bibliothequeId); 
                 break;
             case "borrowings":
-                managementFrame = new LoanManagementFrame(bibliothequeId); // Nouveau cadre pour gérer les emprunts
+                managementFrame = new LoanManagementFrame(bibliothequeId); 
                 break;
             case "purchases":
-                managementFrame = new AchatManagementFrame(bibliothequeId); // Nouveau cadre pour gérer les achats
+                managementFrame = new AchatManagementFrame(bibliothequeId); 
                 break;
             default:
                 return;
@@ -103,8 +99,8 @@ public class LibrarianDashboardFrame extends JFrame {
     }
 
     public static void main(String[] args) {
-        // Exemple d'ID de bibliothèque
-        int bibliothequeId = 1; // Vous pouvez personnaliser cet ID en fonction de la bibliothèque
+        
+        int bibliothequeId = 1; 
         SwingUtilities.invokeLater(() -> new LibrarianDashboardFrame(bibliothequeId).setVisible(true));
     }
 }

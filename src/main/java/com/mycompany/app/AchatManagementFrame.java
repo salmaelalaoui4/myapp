@@ -18,15 +18,21 @@ public class AchatManagementFrame extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
+        // Panel principal
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        mainPanel.setBackground(new Color(45, 52, 54));  // Fond sombre
         add(mainPanel);
 
+        // Titre
         JLabel lblTitle = new JLabel("Gestion des Achats", SwingConstants.CENTER);
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        lblTitle.setForeground(new Color(241, 242, 246));
         mainPanel.add(lblTitle, BorderLayout.NORTH);
 
+        // Panel pour la table
         JPanel tablePanel = new JPanel(new BorderLayout());
+        tablePanel.setBackground(new Color(45, 52, 54));  // Fond sombre
         achatsTable = new JTable();
         JScrollPane tableScrollPane = new JScrollPane(achatsTable);
         tablePanel.add(tableScrollPane, BorderLayout.CENTER);
@@ -34,15 +40,26 @@ public class AchatManagementFrame extends JFrame {
 
         chargerAchats();
 
+        // Panel des boutons
         JPanel buttonPanel = new JPanel(new FlowLayout());
+        buttonPanel.setBackground(new Color(45, 52, 54));  // Fond sombre
 
         JButton btnEnregistrerAchat = new JButton("Enregistrer un Achat");
+        btnEnregistrerAchat.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnEnregistrerAchat.setForeground(Color.WHITE);
+        btnEnregistrerAchat.setBackground(new Color(0, 184, 148));
         btnEnregistrerAchat.addActionListener(e -> afficherFormulaireAchat());
 
         JButton btnModifierAchat = new JButton("Modifier");
+        btnModifierAchat.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnModifierAchat.setForeground(Color.WHITE);
+        btnModifierAchat.setBackground(new Color(0, 184, 148));
         btnModifierAchat.addActionListener(e -> modifierAchat());
 
         JButton btnSupprimerAchat = new JButton("Supprimer");
+        btnSupprimerAchat.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnSupprimerAchat.setForeground(Color.WHITE);
+        btnSupprimerAchat.setBackground(new Color(0, 184, 148));
         btnSupprimerAchat.addActionListener(e -> supprimerAchat());
 
         buttonPanel.add(btnEnregistrerAchat);

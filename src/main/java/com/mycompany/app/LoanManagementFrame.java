@@ -4,8 +4,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
 
 public class LoanManagementFrame extends JFrame {
 
@@ -21,17 +20,16 @@ public class LoanManagementFrame extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        // Panel principal
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         add(mainPanel);
 
-        // Titre
+       
         JLabel lblTitle = new JLabel("Gestion des Emprunts et Retours", SwingConstants.CENTER);
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         mainPanel.add(lblTitle, BorderLayout.NORTH);
 
-        // Tableau des emprunts
+       
         tableModel = new DefaultTableModel(new String[] {
             "ID Emprunt", "ID Livre", "ID Client", "Date Emprunt",
             "Date Retour Prévue", "Date Retour Effective", "Statut"
@@ -40,7 +38,7 @@ public class LoanManagementFrame extends JFrame {
         JScrollPane scrollPane = new JScrollPane(loanTable);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
-        // Boutons
+      
         JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 10, 10));
         JButton btnLoan = new JButton("Enregistrer un Emprunt");
         JButton btnReturn = new JButton("Valider un Retour");
@@ -52,18 +50,18 @@ public class LoanManagementFrame extends JFrame {
         buttonPanel.add(btnReturn);
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
-        chargerEmprunts();  // Charger les emprunts au démarrage de l'interface
+        chargerEmprunts();  
     }
 
     private void chargerEmprunts() {
     System.out.println("Chargement des emprunts pour la bibliothèque ID: " + bibliothequeId);
-    tableModel.setRowCount(0); // Réinitialiser le tableau avant d'ajouter les nouvelles lignes
+    tableModel.setRowCount(0); 
 
     try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-        // Modifier la requête pour exclure les emprunts qui ont déjà été retournés
+        
         String query = "SELECT * FROM emprunt WHERE idBibliotheque = ? AND dateRetourEffective IS NULL";
         try (PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setInt(1, bibliothequeId);  // Passer l'ID de la bibliothèque
+            statement.setInt(1, bibliothequeId); 
             try (ResultSet resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
                     String statutEmprunt = resultSet.getString("statut");
@@ -74,7 +72,7 @@ public class LoanManagementFrame extends JFrame {
                         resultSet.getDate("dateEmprunt"),
                         resultSet.getDate("dateRetourPrevue"),
                         resultSet.getDate("dateRetourEffective"),
-                        statutEmprunt  // Afficher le statut
+                        statutEmprunt  
                     });
                 }
             }
@@ -87,19 +85,19 @@ public class LoanManagementFrame extends JFrame {
 
 
     public void enregistrerEmprunt(int idLivre, int idClient, Date dateEmprunt, Date dateRetourPrevue) {
-    String statut = "en cours"; // Par défaut, le statut est "en cours"
+    String statut = "en cours"; 
     Date currentDate = new Date(System.currentTimeMillis());
 
-    // Si la date de retour prévue est dépassée, changer le statut à "en retard"
+    
     if (dateRetourPrevue.before(currentDate)) {
         statut = "en retard";
     }
 
     try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-        connection.setAutoCommit(false); // Début de la transaction
+        connection.setAutoCommit(false); 
 
         try {
-            // Vérifier si le livre est disponible
+          
             String checkQuery = "SELECT quantiteDisponible, statut FROM livre WHERE idLivre = ?";
             try (PreparedStatement checkStatement = connection.prepareStatement(checkQuery)) {
                 checkStatement.setInt(1, idLivre);
@@ -117,7 +115,7 @@ public class LoanManagementFrame extends JFrame {
                 }
             }
 
-            // Enregistrer l'emprunt
+            
             String query = "INSERT INTO emprunt (idLivre, idClient, idBibliotheque, dateEmprunt, dateRetourPrevue, statut) VALUES (?, ?, ?, ?, ?, ?)";
             try (PreparedStatement statement = connection.prepareStatement(query)) {
                 statement.setInt(1, idLivre);
@@ -133,7 +131,6 @@ public class LoanManagementFrame extends JFrame {
                 }
             }
 
-            // Diminuer la quantité du livre
             String updateQuery = "UPDATE livre SET quantiteDisponible = quantiteDisponible - 1, statut = IF(quantiteDisponible = 1, 'non disponible', 'disponible') WHERE idLivre = ?";
             try (PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
                 updateStatement.setInt(1, idLivre);
@@ -143,11 +140,11 @@ public class LoanManagementFrame extends JFrame {
                 }
             }
 
-            connection.commit(); // Valider la transaction
+            connection.commit();
             JOptionPane.showMessageDialog(null, "Emprunt enregistré avec succès !");
-            chargerEmprunts(); // Recharger les emprunts après insertion
+            chargerEmprunts(); 
         } catch (SQLException e) {
-            connection.rollback(); // Annuler la transaction en cas d'erreur
+            connection.rollback(); 
             throw e;
         }
     } catch (SQLException e) {
@@ -158,7 +155,7 @@ public class LoanManagementFrame extends JFrame {
 
 
     private void afficherFormulaireEmprunt() {
-        // Ouvrir un formulaire pour enregistrer un emprunt (à implémenter)
+       
          EmpruntFormulaireFrame formulaireFrame = new EmpruntFormulaireFrame(this, bibliothequeId);
          formulaireFrame.setVisible(true);
     }
@@ -184,10 +181,10 @@ public class LoanManagementFrame extends JFrame {
     }
 
     try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-        connection.setAutoCommit(false); // Début de la transaction
+        connection.setAutoCommit(false); 
 
         try {
-            // Mettre à jour l'emprunt pour indiquer qu'il est retourné
+            
             String query = "UPDATE emprunt SET dateRetourEffective = NOW(), statut = 'retourné' WHERE idEmprunt = ?";
             try (PreparedStatement statement = connection.prepareStatement(query)) {
                 statement.setInt(1, idEmprunt);
@@ -197,7 +194,7 @@ public class LoanManagementFrame extends JFrame {
                 }
             }
 
-            // Augmenter la quantité du livre
+          
             String updateQuery = "UPDATE livre SET quantiteDisponible = quantiteDisponible + 1 WHERE idLivre = ?";
             try (PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
                 updateStatement.setInt(1, idLivre);
@@ -207,11 +204,11 @@ public class LoanManagementFrame extends JFrame {
                 }
             }
 
-            connection.commit(); // Valider la transaction
+            connection.commit();
             JOptionPane.showMessageDialog(this, "Retour validé avec succès !");
-            chargerEmprunts(); // Recharger les emprunts après le retour
+            chargerEmprunts(); 
         } catch (SQLException e) {
-            connection.rollback(); // Annuler la transaction en cas d'erreur
+            connection.rollback(); 
             throw e;
         }
     } catch (SQLException e) {
@@ -222,7 +219,7 @@ public class LoanManagementFrame extends JFrame {
 
 
     public static void main(String[] args) {
-        int bibliothequeId = 1;  // Exemple : bibliothèque avec ID 1
+        int bibliothequeId = 1; 
         SwingUtilities.invokeLater(() -> {
             LoanManagementFrame frame = new LoanManagementFrame(bibliothequeId);
             frame.setVisible(true);

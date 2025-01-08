@@ -7,9 +7,9 @@ import java.io.File;
 public class BookDetailsFrame extends JFrame {
 
     public BookDetailsFrame(String titre, String auteur, String annee, String isbn, String description, String photoPath, String quantiteDisponible) {
-        // Configuration de la fenêtre
+        
         setTitle("Détails du Livre");
-        setSize(800, 600); // Augmenter la taille pour une meilleure disposition
+        setSize(800, 600); 
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
@@ -18,19 +18,17 @@ public class BookDetailsFrame extends JFrame {
         mainPanel.setBackground(new Color(45, 52, 54));
         add(mainPanel);
 
-        // Titre du livre
         JLabel lblTitle = new JLabel(titre, SwingConstants.CENTER);
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 24));
         lblTitle.setForeground(new Color(241, 242, 246));
         mainPanel.add(lblTitle, BorderLayout.NORTH);
 
-        // Panel central : contient la photo à gauche et la description/informations à droite
+        
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new BorderLayout(10, 10));
         centerPanel.setBackground(new Color(45, 52, 54));
         mainPanel.add(centerPanel, BorderLayout.CENTER);
 
-        // Ajouter la photo à gauche
         JLabel photoLabel;
         if (photoPath != null && !photoPath.isEmpty() && new File(photoPath).exists()) {
             ImageIcon bookImage = new ImageIcon(photoPath);
@@ -45,13 +43,11 @@ public class BookDetailsFrame extends JFrame {
         photoLabel.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
         centerPanel.add(photoLabel, BorderLayout.WEST);
 
-        // Description et informations à droite
         JPanel detailsPanel = new JPanel();
         detailsPanel.setLayout(new BorderLayout(10, 10));
         detailsPanel.setBackground(new Color(45, 52, 54));
         centerPanel.add(detailsPanel, BorderLayout.CENTER);
 
-        // Ajouter la description dans un JTextArea avec JScrollPane
         JTextArea descriptionArea = new JTextArea(description);
         descriptionArea.setEditable(false);
         descriptionArea.setLineWrap(true);
@@ -63,7 +59,6 @@ public class BookDetailsFrame extends JFrame {
         scrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(new Color(100, 100, 100)), "Description", 0, 0, new Font("Segoe UI", Font.BOLD, 16), new Color(241, 242, 246)));
         detailsPanel.add(scrollPane, BorderLayout.CENTER);
 
-        // Ajouter les informations supplémentaires sous la description
         JPanel infoPanel = new JPanel(new GridLayout(3, 1));
         infoPanel.setBackground(new Color(45, 52, 54));
         infoPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(new Color(100, 100, 100)), "Informations", 0, 0, new Font("Segoe UI", Font.BOLD, 16), new Color(241, 242, 246)));

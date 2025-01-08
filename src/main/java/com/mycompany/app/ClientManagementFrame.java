@@ -9,7 +9,7 @@ public class ClientManagementFrame extends JFrame {
 
     private JTable clientTable;
     private DefaultTableModel tableModel;
-    private int bibliothequeId; // ID de la bibliothèque
+    private int bibliothequeId; 
 
     public ClientManagementFrame(int bibliothequeId) {
         this.bibliothequeId = bibliothequeId;
@@ -19,23 +19,23 @@ public class ClientManagementFrame extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        // Panel principal
+        
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         add(mainPanel);
 
-        // Titre
+        
         JLabel lblTitle = new JLabel("Gestion des Clients - Bibliothèque " + bibliothequeId, SwingConstants.CENTER);
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         mainPanel.add(lblTitle, BorderLayout.NORTH);
 
-        // Tableau des clients
+    
         tableModel = new DefaultTableModel(new String[]{"ID", "Nom", "Prénom", "Email", "Téléphone"}, 0);
         clientTable = new JTable(tableModel);
         JScrollPane scrollPane = new JScrollPane(clientTable);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
-        // Boutons
+        
         JPanel buttonPanel = new JPanel(new GridLayout(1, 3, 10, 10));
         JButton btnAdd = new JButton("Ajouter");
         JButton btnUpdate = new JButton("Mettre à jour");
@@ -50,12 +50,12 @@ public class ClientManagementFrame extends JFrame {
         buttonPanel.add(btnDelete);
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
-        // Charger les clients au démarrage
+        
         chargerClients();
     }
 
     private void chargerClients() {
-        tableModel.setRowCount(0); // Efface les données existantes dans le tableau
+        tableModel.setRowCount(0); 
 
         try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
             String query = "SELECT idClient, nom, prenom, email, telephone FROM client WHERE statut = 1 AND idBibliotheque = ?";
@@ -104,7 +104,7 @@ public class ClientManagementFrame extends JFrame {
             statement.executeUpdate();
 
             JOptionPane.showMessageDialog(this, "Client ajouté avec succès !");
-            chargerClients(); // Recharger la liste des clients après l'ajout
+            chargerClients();
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Erreur lors de l'ajout du client : " + e.getMessage());
@@ -118,10 +118,10 @@ public class ClientManagementFrame extends JFrame {
             return;
         }
 
-        // Récupérer l'ID du client sélectionné
+       
         int idClient = (int) tableModel.getValueAt(selectedRow, 0);
 
-        // Demander les nouvelles valeurs
+        
         String nouveauNom = JOptionPane.showInputDialog(this, "Nouveau nom :", tableModel.getValueAt(selectedRow, 1));
         String nouveauPrenom = JOptionPane.showInputDialog(this, "Nouveau prénom :", tableModel.getValueAt(selectedRow, 2));
         String nouveauTelephone = JOptionPane.showInputDialog(this, "Nouveau téléphone :", tableModel.getValueAt(selectedRow, 4));
@@ -143,7 +143,7 @@ public class ClientManagementFrame extends JFrame {
             statement.executeUpdate();
 
             JOptionPane.showMessageDialog(this, "Client mis à jour avec succès !");
-            chargerClients(); // Rafraîchir la table après la mise à jour
+            chargerClients(); 
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Erreur lors de la mise à jour du client : " + e.getMessage());
@@ -159,7 +159,6 @@ public class ClientManagementFrame extends JFrame {
 
         int idClient = (int) tableModel.getValueAt(selectedRow, 0);
 
-        // Demander confirmation
         int confirm = JOptionPane.showConfirmDialog(this, "Êtes-vous sûr de vouloir supprimer ce client ?", "Confirmation", JOptionPane.YES_NO_OPTION);
         if (confirm != JOptionPane.YES_OPTION) {
             return;
@@ -174,7 +173,7 @@ public class ClientManagementFrame extends JFrame {
 
             if (rowsUpdated > 0) {
                 JOptionPane.showMessageDialog(this, "Client supprimé avec succès !");
-                chargerClients(); // Recharger la liste après la suppression
+                chargerClients(); 
             } else {
                 JOptionPane.showMessageDialog(this, "Erreur lors de la suppression du client.");
             }
@@ -185,6 +184,6 @@ public class ClientManagementFrame extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new ClientManagementFrame(1).setVisible(true)); // Exemple avec bibliothequeId = 1
+        SwingUtilities.invokeLater(() -> new ClientManagementFrame(1).setVisible(true)); 
     }
 }

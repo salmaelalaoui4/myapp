@@ -6,11 +6,11 @@ import java.sql.*;
 
 public class AddBookFrame extends JFrame {
 
-    private BookManagementFrame parentFrame;  // Reference to parent frame
+    private BookManagementFrame parentFrame; 
     private int bibliothequeId;
 
     public AddBookFrame(BookManagementFrame parentFrame,int userLibraryId) {
-        this.parentFrame = parentFrame; // Store parent reference
+        this.parentFrame = parentFrame;
         this.bibliothequeId = userLibraryId; 
 
         setTitle("Ajouter un Livre");
@@ -70,8 +70,8 @@ public class AddBookFrame extends JFrame {
 
                 statement.executeUpdate();
                 JOptionPane.showMessageDialog(this, "Livre ajouté avec succès !");
-                parentFrame.chargerLivres();  // Refresh the parent frame's book list
-                dispose(); // Close the window
+                parentFrame.chargerLivres(); 
+                dispose(); 
             } catch (SQLException ex) {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(this, "Erreur lors de l'ajout du livre : " + ex.getMessage());
@@ -92,7 +92,7 @@ public class AddBookFrame extends JFrame {
         mainPanel.add(txtquantiteDisponible);
         mainPanel.add(lbldesc);
         mainPanel.add(txtdesc);
-        mainPanel.add(new JLabel()); // Espace vide
+        mainPanel.add(new JLabel()); 
         mainPanel.add(btnSave);
 
         add(mainPanel);

@@ -19,23 +19,19 @@ public class GestionAchatsAdminFrame extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        // Panel principal
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         add(mainPanel);
 
-        // Titre
         JLabel lblTitle = new JLabel("Gestion des Achats", SwingConstants.CENTER);
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
         mainPanel.add(lblTitle, BorderLayout.NORTH);
 
-        // Tableau des achats
         tableModel = new DefaultTableModel(new String[]{"ID Achat", "ID Client", "ID Livre", "Quantité", "Statut"}, 0);
         achatTable = new JTable(tableModel);
         JScrollPane scrollPane = new JScrollPane(achatTable);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
-        // Boutons
         JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 10, 10));
         JButton btnValidate = new JButton("Valider");
         JButton btnReject = new JButton("Rejeter");
@@ -56,7 +52,7 @@ public class GestionAchatsAdminFrame extends JFrame {
             try (PreparedStatement statement = connection.prepareStatement(query)) {
                 statement.setInt(1, bibliothequeId);
                 try (ResultSet resultSet = statement.executeQuery()) {
-                    tableModel.setRowCount(0); // Effacer les anciennes données
+                    tableModel.setRowCount(0); 
 
                     while (resultSet.next()) {
                         int idAchat = resultSet.getInt("idAchat");
@@ -65,7 +61,6 @@ public class GestionAchatsAdminFrame extends JFrame {
                         int quantite = resultSet.getInt("quantite");
                         int statutValue = resultSet.getInt("statutValidation");
 
-                        // Convertir les valeurs numériques en texte
                         String statut = "En attente";
                         if (statutValue == 1) {
                             statut = "Validé";
@@ -91,11 +86,10 @@ public class GestionAchatsAdminFrame extends JFrame {
         }
 
         int idAchat = (int) tableModel.getValueAt(selectedRow, 0);
-        int idLivre = (int) tableModel.getValueAt(selectedRow, 2); // ID Livre
-        int quantite = (int) tableModel.getValueAt(selectedRow, 3); // Quantité achetée
+        int idLivre = (int) tableModel.getValueAt(selectedRow, 2); 
+        int quantite = (int) tableModel.getValueAt(selectedRow, 3); 
         int statutValue = 0;
 
-        // Mapper les statuts texte aux valeurs numériques
         switch (nouveauStatut.toLowerCase()) {
             case "validé":
                 statutValue = 1;
@@ -110,10 +104,9 @@ public class GestionAchatsAdminFrame extends JFrame {
         }
 
         try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-            // Commencer une transaction
+            
             connection.setAutoCommit(false);
 
-            // Mettre à jour le statut de l'achat
             String updateAchatQuery = "UPDATE achat SET statutValidation = ? WHERE idAchat = ?";
             try (PreparedStatement updateAchatStmt = connection.prepareStatement(updateAchatQuery)) {
                 updateAchatStmt.setInt(1, statutValue);
@@ -121,14 +114,12 @@ public class GestionAchatsAdminFrame extends JFrame {
                 updateAchatStmt.executeUpdate();
             }
 
-            // Si le statut est validé, décrémenter la quantité du livre
-            if (statutValue == 1) { // Si l'achat est validé
+            if (statutValue == 1) { 
                 String updateLivreQuantiteQuery = "UPDATE livre SET quantiteDisponible = quantiteDisponible - ? WHERE idLivre = ?";
                 String updateLivreStatutQuery = "UPDATE livre SET statut = IF(quantiteDisponible = 0, 'non disponible', 'disponible') WHERE idLivre = ?";
 
                 try (PreparedStatement updateLivreQuantiteStmt = connection.prepareStatement(updateLivreQuantiteQuery); PreparedStatement updateLivreStatutStmt = connection.prepareStatement(updateLivreStatutQuery)) {
 
-                    // Décrémenter la quantité
                     updateLivreQuantiteStmt.setInt(1, quantite);
                     updateLivreQuantiteStmt.setInt(2, idLivre);
                     int rowsUpdated = updateLivreQuantiteStmt.executeUpdate();
@@ -137,13 +128,11 @@ public class GestionAchatsAdminFrame extends JFrame {
                         throw new SQLException("Échec de la mise à jour de la quantité pour le livre ID " + idLivre);
                     }
 
-                    // Mettre à jour le statut
                     updateLivreStatutStmt.setInt(1, idLivre);
                     updateLivreStatutStmt.executeUpdate();
                 }
             }
 
-            // Valider la transaction
             connection.commit();
 
             JOptionPane.showMessageDialog(this, "Achat " + nouveauStatut + " avec succès !");
@@ -155,6 +144,6 @@ public class GestionAchatsAdminFrame extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new GestionAchatsAdminFrame(1).setVisible(true)); // Test avec idBibliotheque = 1
+        SwingUtilities.invokeLater(() -> new GestionAchatsAdminFrame(1).setVisible(true)); 
     }
 }

@@ -25,32 +25,27 @@ public class EmpruntFormulaireFrame extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        // Panel principal
         JPanel mainPanel = new JPanel(new GridLayout(5, 2, 10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         add(mainPanel);
 
-        // Champs pour Client
         JLabel lblClient = new JLabel("Sélectionner un Client:");
         clientComboBox = new JComboBox<>();
         chargerClients();
         mainPanel.add(lblClient);
         mainPanel.add(clientComboBox);
 
-        // Champs pour Livre
         JLabel lblLivre = new JLabel("Sélectionner un Livre:");
         livreComboBox = new JComboBox<>();
         chargerLivres();
         mainPanel.add(lblLivre);
         mainPanel.add(livreComboBox);
 
-        // Champ pour Date Emprunt
         JLabel lblDateEmprunt = new JLabel("Date Emprunt (yyyy-mm-dd):");
         dateEmpruntField = new JTextField();
         mainPanel.add(lblDateEmprunt);
         mainPanel.add(dateEmpruntField);
 
-        // Champ pour Date Retour Prévue
         JLabel lblDateRetourPrevue = new JLabel("Date Retour Prévue (yyyy-mm-dd):");
         dateRetourPrevueField = new JTextField();
         mainPanel.add(lblDateRetourPrevue);
@@ -64,7 +59,7 @@ public class EmpruntFormulaireFrame extends JFrame {
                 enregistrerEmprunt();
             }
         });
-        mainPanel.add(new JLabel());  // Empty label for layout
+        mainPanel.add(new JLabel());  
         mainPanel.add(enregistrerButton);
     }
 
@@ -105,7 +100,6 @@ public class EmpruntFormulaireFrame extends JFrame {
 
     private void enregistrerEmprunt() {
         try {
-            // Récupérer les valeurs du formulaire
             String selectedClient = (String) clientComboBox.getSelectedItem();
             int idClient = Integer.parseInt(selectedClient.split(" - ")[0]);
 
@@ -115,19 +109,15 @@ public class EmpruntFormulaireFrame extends JFrame {
             String dateEmpruntStr = dateEmpruntField.getText();
             String dateRetourPrevueStr = dateRetourPrevueField.getText();
 
-            // Convertir les dates en format Date
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             java.util.Date dateEmprunt = dateFormat.parse(dateEmpruntStr);
             java.util.Date dateRetourPrevue = dateFormat.parse(dateRetourPrevueStr);
 
-            // Convertir java.util.Date en java.sql.Date
             java.sql.Date sqlDateEmprunt = new java.sql.Date(dateEmprunt.getTime());
             java.sql.Date sqlDateRetourPrevue = new java.sql.Date(dateRetourPrevue.getTime());
 
-            // Enregistrer l'emprunt
             loanManagementFrame.enregistrerEmprunt(idLivre, idClient, sqlDateEmprunt, sqlDateRetourPrevue);
 
-            // Fermer le formulaire
             dispose();
         } catch (Exception e) {
             e.printStackTrace();

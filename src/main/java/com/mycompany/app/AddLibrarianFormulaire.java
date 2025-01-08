@@ -12,21 +12,21 @@ public class AddLibrarianFormulaire extends JFrame {
     private JTextField txtNom, txtPrenom, txtEmail, txtTelephone, txtPassword;
     private int idBibliotheque;
     private JButton btnAdd;
-    private AdminLibrarianManagementFrame adminFrame;  // Référence à la fenêtre admin
+    private AdminLibrarianManagementFrame adminFrame;  
 
     public AddLibrarianFormulaire(int idBibliotheque, AdminLibrarianManagementFrame adminFrame) {
         this.idBibliotheque = idBibliotheque;
-        this.adminFrame = adminFrame;  // Initialisation de la référence
+        this.adminFrame = adminFrame;  // 
         setTitle("Ajouter un Bibliothécaire");
         setSize(400, 300);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         
-        // Panel principal pour organiser les composants
+       
         JPanel panel = new JPanel();
         panel.setLayout(new GridLayout(6, 2, 10, 10));
         
-        // Champs pour le nom, prénom, email, téléphone et mot de passe
+     
         JLabel lblNom = new JLabel("Nom:");
         txtNom = new JTextField();
         
@@ -55,30 +55,30 @@ public class AddLibrarianFormulaire extends JFrame {
         panel.add(txtTelephone);
         panel.add(lblPassword);
         panel.add(txtPassword);
-        panel.add(new JLabel());  // Pour l'alignement
+        panel.add(new JLabel());
         panel.add(btnAdd);
 
         add(panel, BorderLayout.CENTER);
 
-        // Ajouter un actionListener au bouton
+       
         btnAdd.addActionListener(e -> ajouterBibliothecaire());
     }
 
     private void ajouterBibliothecaire() {
-        // Collecte des informations
+ 
         String nom = txtNom.getText();
         String prenom = txtPrenom.getText();
         String email = txtEmail.getText();
         String telephone = txtTelephone.getText();
         String password = txtPassword.getText();
 
-        // Vérification que tous les champs sont remplis
+
         if (nom.isEmpty() || prenom.isEmpty() || email.isEmpty() || telephone.isEmpty() || password.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Tous les champs sont obligatoires !");
             return;
         }
 
-        // Enregistrement dans la base de données
+ 
         try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
             String query = "INSERT INTO utilisateur (nom, prenom, email, telephone, motDePasse, role, statut, idBibliotheque) VALUES (?, ?, ?, ?, ?, 'bibliothecaire', 1, ?)";
             PreparedStatement statement = connection.prepareStatement(query);
@@ -92,10 +92,10 @@ public class AddLibrarianFormulaire extends JFrame {
             
             JOptionPane.showMessageDialog(this, "Bibliothécaire ajouté avec succès !");
             
-            // Rafraîchir la liste des bibliothécaires dans AdminLibrarianManagementFrame
+           
             adminFrame.chargerBibliothecaires();  // Appeler la méthode de la classe adminFrame pour rafraîchir la liste
             
-            dispose(); // Fermer la fenêtre après l'ajout
+            dispose();
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Erreur lors de l'ajout du bibliothécaire : " + e.getMessage());

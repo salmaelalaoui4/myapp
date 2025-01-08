@@ -12,45 +12,47 @@ public class AdminLibrarianManagementFrame extends JFrame {
     private DefaultTableModel tableModel;
 
     public AdminLibrarianManagementFrame(int bibliothequeId) {
-         this.bibliothequeId = bibliothequeId;
+        this.bibliothequeId = bibliothequeId;
         setTitle("Gestion des Bibliothécaires");
         setSize(900, 600);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        // Panel principal
+   
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        mainPanel.setBackground(new Color(45, 52, 54));  // Fond sombre
         add(mainPanel);
 
-        // Titre
         JLabel lblTitle = new JLabel("Gestion des Bibliothécaires", SwingConstants.CENTER);
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        lblTitle.setForeground(new Color(241, 242, 246));
         mainPanel.add(lblTitle, BorderLayout.NORTH);
 
-        // Tableau des bibliothécaires
         tableModel = new DefaultTableModel(new String[]{"ID", "Nom", "Email", "Téléphone", "Statut"}, 0);
         librarianTable = new JTable(tableModel);
         JScrollPane scrollPane = new JScrollPane(librarianTable);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
-        // Boutons
         JPanel buttonPanel = new JPanel(new GridLayout(1, 4, 10, 10));
+        buttonPanel.setBackground(new Color(45, 52, 54));  // Fond sombre
+
         JButton btnAdd = new JButton("Ajouter");
-        JButton btnDelete = new JButton("Supprimer");// Nouveau bouton pour revenir au Dashboard
+        btnAdd.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnAdd.setForeground(Color.WHITE);
+        btnAdd.setBackground(new Color(0, 184, 148));
+        btnAdd.addActionListener(e -> {
+            
+            AddLibrarianFormulaire formulaire = new AddLibrarianFormulaire(bibliothequeId, this);  
+            formulaire.setVisible(true);
+        });
 
-    btnAdd.addActionListener(e -> {
-    // Ouvrir le formulaire pour ajouter un bibliothécaire et passer la référence à la fenêtre admin
-    AddLibrarianFormulaire formulaire = new AddLibrarianFormulaire(bibliothequeId, this);  // Passer "this" (la fenêtre actuelle) à AddLibrarianFormulaire
-    formulaire.setVisible(true);
-});
-
-
+        JButton btnDelete = new JButton("Supprimer");
+        btnDelete.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnDelete.setForeground(Color.WHITE);
+        btnDelete.setBackground(new Color(0, 184, 148));
         btnDelete.addActionListener(e -> supprimerBibliothecaire());
 
-         // Action pour le bouton Retour au Dashboard
-        
-        
         buttonPanel.add(btnAdd);
         buttonPanel.add(btnDelete);
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
@@ -59,33 +61,29 @@ public class AdminLibrarianManagementFrame extends JFrame {
     }
 
     void chargerBibliothecaires() {
-    tableModel.setRowCount(0);  // Effacer les anciennes lignes
-    try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
-        // Utilisation de l'ID de la bibliothèque de l'administrateur pour filtrer les bibliothécaires
-        String query = "SELECT * FROM utilisateur WHERE role = 'bibliothecaire' AND idBibliotheque = ?";
-        PreparedStatement statement = connection.prepareStatement(query);
-        statement.setInt(1, bibliothequeId);  // Paramétrage de l'ID de la bibliothèque
-        ResultSet resultSet = statement.executeQuery();
+        tableModel.setRowCount(0);  
+        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/biblio", "root", "")) {
+            
+            String query = "SELECT * FROM utilisateur WHERE role = 'bibliothecaire' AND idBibliotheque = ?";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setInt(1, bibliothequeId); 
+            ResultSet resultSet = statement.executeQuery();
 
-        while (resultSet.next()) {
-            tableModel.addRow(new Object[]{
-                resultSet.getInt("idUtilisateur"),
-                resultSet.getString("nom"),
-                resultSet.getString("prenom"), // Ajout du prénom
-                resultSet.getString("email"),
-                resultSet.getString("telephone"),
-                resultSet.getBoolean("statut") ? "Actif" : "Désactivé"
-            });
+            while (resultSet.next()) {
+                tableModel.addRow(new Object[]{
+                        resultSet.getInt("idUtilisateur"),
+                        resultSet.getString("nom"),
+                        resultSet.getString("prenom"),
+                        resultSet.getString("email"),
+                        resultSet.getString("telephone"),
+                        resultSet.getBoolean("statut") ? "Actif" : "Désactivé"
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Erreur lors du chargement des bibliothécaires : " + e.getMessage());
         }
-    } catch (Exception e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Erreur lors du chargement des bibliothécaires : " + e.getMessage());
     }
-}
-
-
-
-    
 
     private void supprimerBibliothecaire() {
         int selectedRow = librarianTable.getSelectedRow();
