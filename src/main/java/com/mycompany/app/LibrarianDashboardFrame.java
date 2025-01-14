@@ -13,11 +13,9 @@ public class LibrarianDashboardFrame extends JFrame {
 
     private int bibliothequeId;
 
-   
     private String getBibliothequeName(int bibliothequeId) {
         String bibliothequeName = "Bibliothèque Inconnue";
-        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/biblio", "root", "");
-             PreparedStatement stmt = conn.prepareStatement("SELECT nom FROM bibliotheque WHERE idBibliotheque = ?")) {
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/biblio", "root", ""); PreparedStatement stmt = conn.prepareStatement("SELECT nom FROM bibliotheque WHERE idBibliotheque = ?")) {
             stmt.setInt(1, bibliothequeId);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
@@ -50,7 +48,7 @@ public class LibrarianDashboardFrame extends JFrame {
         lblTitle.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
         mainPanel.add(lblTitle, BorderLayout.NORTH);
 
-        JPanel buttonPanel = new JPanel(new GridLayout(5, 1, 20, 20)); 
+        JPanel buttonPanel = new JPanel(new GridLayout(5, 1, 20, 20));
         buttonPanel.setBackground(new Color(45, 52, 54));
 
         // Boutons pour les fonctionnalités
@@ -59,11 +57,21 @@ public class LibrarianDashboardFrame extends JFrame {
         JButton btnConsultBorrowings = createButton("Consulter les Emprunts", e -> openManagementFrame("borrowings"));
         JButton btnConsultPurchases = createButton("Consulter les Achats", e -> openManagementFrame("purchases"));
 
+        JButton btnLogout = new JButton("Déconnexion");
+        btnLogout.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        btnLogout.setBackground(new Color(255, 71, 87));
+        btnLogout.setForeground(Color.WHITE);
+        btnLogout.setFocusPainted(false);
+        btnLogout.addActionListener(e -> {
+            dispose();
+            new LoginFrame().setVisible(true);
+        });
+
         buttonPanel.add(btnManageClients);
         buttonPanel.add(btnManageBooks);
-        buttonPanel.add(btnConsultBorrowings); 
-        buttonPanel.add(btnConsultPurchases); 
-
+        buttonPanel.add(btnConsultBorrowings);
+        buttonPanel.add(btnConsultPurchases);
+        buttonPanel.add(btnLogout);
         mainPanel.add(buttonPanel, BorderLayout.CENTER);
     }
 
@@ -84,13 +92,13 @@ public class LibrarianDashboardFrame extends JFrame {
                 managementFrame = new ClientManagementFrame(bibliothequeId);
                 break;
             case "books":
-                managementFrame = new BooksDisplayForLibrarianFrame(bibliothequeId); 
+                managementFrame = new BooksDisplayForLibrarianFrame(bibliothequeId);
                 break;
             case "borrowings":
-                managementFrame = new LoanManagementFrame(bibliothequeId); 
+                managementFrame = new LoanManagementFrame(bibliothequeId);
                 break;
             case "purchases":
-                managementFrame = new AchatManagementFrame(bibliothequeId); 
+                managementFrame = new AchatManagementFrame(bibliothequeId);
                 break;
             default:
                 return;
@@ -99,8 +107,8 @@ public class LibrarianDashboardFrame extends JFrame {
     }
 
     public static void main(String[] args) {
-        
-        int bibliothequeId = 1; 
+
+        int bibliothequeId = 1;
         SwingUtilities.invokeLater(() -> new LibrarianDashboardFrame(bibliothequeId).setVisible(true));
     }
 }
